@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nexustechpro/baileys",
   "type": "module",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "Advanced WhatsApp Web API client with interactive messages, product catalogs, carousels, events, payments, and polls.",
   "keywords": [
     "whatsapp",
@@ -57,11 +57,17 @@
     "release": "release-it",
     "test": "jest"
   },
-  "files": [
-    "lib/**/*.js",
-    "WAProto/**/*.js",
-    "engine-requirements.js"
-  ],
+"files": [
+  "lib/**/*.js",
+  "lib/**/*.json",
+  "lib/**/*.d.ts",
+  "lib/**/*.map",
+  "WAProto/**/*.js",
+  "WAProto/**/*.json",
+  "WAProto/**/*.d.ts",
+  "WAProto/**/*.sh",
+  "engine-requirements.js"
+],
   "dependencies": {
     "@cacheable/node-cache": "^1.4.0",
     "@hapi/boom": "^9.1.3",
