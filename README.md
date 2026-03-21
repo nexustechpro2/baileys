@@ -613,7 +613,7 @@ await sock.sendMessage(jid, {
 #### Link Preview
 ```javascript
 await sock.sendMessage(jid, {
-    text: 'Check out https://github.com/nexustechpro1/baileys'
+    text: 'Check out https://github.com/nexustechpro2/baileys'
 })
 ```
 
@@ -1737,10 +1737,10 @@ Special thanks to:
 
 <div align="center">
   
-  **Made with ❤️ by [NexusTechPro](https://github.com/nexustechpro1)**
+  **Made with ❤️ by [NexusTechPro](https://github.com/nexustechpro2)**
   
   ⭐ **Star us on GitHub!** ⭐
   
-  [GitHub](https://github.com/nexustechpro1/baileys) • [NPM](https://www.npmjs.com/package/@nexustechpro/baileys) • [Documentation](https://github.com/nexustechpro1/baileys/wiki)
+  [GitHub](https://github.com/nexustechpro2/baileys) • [NPM](https://www.npmjs.com/package/@nexustechpro/baileys) • [Documentation](https://github.com/nexustechpro2/baileys/wiki)
 
 </div>
