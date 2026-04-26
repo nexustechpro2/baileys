@@ -81,10 +81,11 @@
     "music-metadata": "^11.7.0",
     "p-queue": "^9.0.0",
     "pino": "^9.6",
-    "protobufjs": "^7.2.4",
+    "uuid": "latest",
+    "protobufjs": "latest",
     "sharp": "^0.32.0",
     "whatsapp-rust-bridge": "latest",
-    "ws": "^8.13.0",
+    "ws": "latest",
     "yarn": "^1.22.22"
   },
   "devDependencies": {
