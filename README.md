@@ -334,6 +334,37 @@ sock.ev.on('contacts.upsert', () => {
 await sock.sendMessage(jid, { text: 'Hello World!' })
 ```
 
+### Shorthand Wrappers
+We provide convenient shorthands for common message types:
+
+```javascript
+// Text
+await sock.sendText(jid, 'Hello World!', options)
+
+// Media (Image/Video/Document)
+await sock.sendImage(jid, { url: './image.jpg' }, 'Image caption', options)
+await sock.sendVideo(jid, buffer, 'Video caption', options)
+await sock.sendDocument(jid, { url: './doc.pdf' }, 'Document caption', options)
+await sock.sendAudio(jid, { url: './audio.mp3' }, options)
+
+// Other Message Types
+await sock.sendLocation(jid, { degreesLatitude: 24.12, degreesLongitude: 55.11, name: "Location" }, options)
+await sock.sendPoll(jid, 'Favorite Color?', ['Red', 'Blue'], false, options)
+await sock.sendReaction(jid, message.key, '💖', options)
+await sock.sendSticker(jid, { url: './sticker.webp' }, options)
+await sock.sendContact(jid, { vcard }, options)
+await sock.sendForward(jid, message, { force: true })
+```
+
+### AI Messages
+You can send a message with an AI indicator label (shown as "enhanced AI feature" to recipients).
+```javascript
+await sock.sendMessage(jid, { 
+    text: 'This is an AI generated response', 
+    ai: true 
+})
+```
+
 #### Quote Message (works with all types)
 ```javascript
 await sock.sendMessage(jid, { text: 'This is a reply' }, { quoted: message })
@@ -1461,6 +1492,14 @@ await sock.sendMessage(jid, {
 await sock.sendMessage('status@broadcast', {
     image: { url: './story.jpg' },
     caption: 'My story update!'
+})
+```
+
+### Send Group Story
+You can post stories that are visible to specific groups using `sendGroupStatusMessage`:
+```javascript
+await sock.sendGroupStatusMessage(groupJid, {
+    text: 'Hello group!', // Or image, video, etc.
 })
 ```
 
