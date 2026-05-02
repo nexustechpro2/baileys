@@ -86,7 +86,8 @@
     "sharp": "^0.32.0",
     "whatsapp-rust-bridge": "latest",
     "ws": "latest",
-    "yarn": "^1.22.22"
+    "yarn": "^1.22.22",
+    "link-preview-js": "latest"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
