@@ -8,7 +8,7 @@
 
 [![NPM Version](https://img.shields.io/npm/v/@nexustechpro/baileys?color=success&logo=npm&style=flat-square)](https://www.npmjs.com/package/@nexustechpro/baileys)
 [![Downloads](https://img.shields.io/npm/dt/@nexustechpro/baileys?color=blue&logo=npm&style=flat-square)](https://www.npmjs.com/package/@nexustechpro/baileys)
-[![License](https://img.shields.io/npm/l/@nexustechpro/baileys?color=yellow&style=flat-square)](./LICENSE)
+[![License](https://img.shields.io/npm/l/@nexustechpro/baileys?color=yellow&style=flat-square)](https://github.com/nexustechpro2/baileys/blob/main/LICENSE)
 [![Node Version](https://img.shields.io/node/v/@nexustechpro/baileys?style=flat-square)](https://nodejs.org)
 [![Socket Badge](https://socket.dev/api/badge/npm/package/@nexustechpro/baileys)](https://socket.dev/npm/package/@nexustechpro/baileys)
 
