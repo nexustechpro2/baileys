@@ -65,7 +65,7 @@ yarn add @nexustechpro/baileys
   }
 }
 
-//OR
+               // OR
 
 {
     "dependencies": {
