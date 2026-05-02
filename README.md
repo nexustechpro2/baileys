@@ -1,17 +1,18 @@
-# 🚀 NexusTechPro Baileys
-
 <div align="center">
-  
-  ![NexusTechPro Banner](https://files.catbox.moe/1rjzor.jpeg)
-  
-  **Advanced WhatsApp Web API Built on WhiskeySockets/Baileys**
-  
-  [![NPM Version](https://img.shields.io/npm/v/@nexustechpro/baileys?color=success&logo=npm)](https://www.npmjs.com/package/@nexustechpro/baileys)
-  [![Downloads](https://img.shields.io/npm/dt/@nexustechpro/baileys?color=blue&logo=npm)](https://www.npmjs.com/package/@nexustechpro/baileys)
-  [![License](https://img.shields.io/github/license/nexustechpro/baileys?color=yellow)](./LICENSE)
-  [![Node Version](https://img.shields.io/node/v/@nexustechpro/baileys)](https://nodejs.org)
-  
-  *Modern, feature-rich, and developer-friendly WhatsApp automation library*
+
+![NexusTechPro Banner](https://files.catbox.moe/1rjzor.jpeg)
+
+# @nexustechpro/baileys
+
+**Advanced WhatsApp Web API — Built on WhiskeySockets/Baileys**
+
+[![NPM Version](https://img.shields.io/npm/v/@nexustechpro/baileys?color=success&logo=npm&style=flat-square)](https://www.npmjs.com/package/@nexustechpro/baileys)
+[![Downloads](https://img.shields.io/npm/dt/@nexustechpro/baileys?color=blue&logo=npm&style=flat-square)](https://www.npmjs.com/package/@nexustechpro/baileys)
+[![License](https://img.shields.io/npm/l/@nexustechpro/baileys?color=yellow&style=flat-square)](./LICENSE)
+[![Node Version](https://img.shields.io/node/v/@nexustechpro/baileys?style=flat-square)](https://nodejs.org)
+[![Socket Badge](https://socket.dev/api/badge/npm/package/@nexustechpro/baileys)](https://socket.dev/npm/package/@nexustechpro/baileys)
+
+*Modern, feature-rich, and developer-friendly WhatsApp automation library*
 
 </div>
 
@@ -19,86 +20,63 @@
 
 ## 📋 Table of Contents
 
-- [✨ Features](#-features)
-- [📦 Installation](#-installation)
-- [🔌 Quick Start](#-quick-start)
-- [🔐 Authentication](#-authentication)
-- [💡 Socket Configuration](#-socket-configuration)
-- [💾 Session Management](#-session-management)
-- [📡 Event Handling](#-event-handling)
-- [🛠️ Data Store](#️-data-store)
-- [🔑 WhatsApp IDs](#-whatsapp-ids)
-- [💬 Sending Messages](#-sending-messages)
-  - [Text & Special Messages](#text--special-messages)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Authentication](#-authentication)
+- [Browser Options](#-browser-options)
+- [Socket Configuration](#-socket-configuration)
+- [Session Management](#-session-management)
+- [Sending Messages](#-sending-messages)
+  - [Text Messages](#text-messages)
   - [Media Messages](#media-messages)
-  - [Buttons & Interactive Messages](#buttons--interactive-messages)
-- [✏️ Message Modifications](#️-message-modifications)
-- [📥 Media Operations](#-media-operations)
-- [👥 Group Management](#-group-management)
-- [📱 User Operations](#-user-operations)
-- [🔒 Privacy Controls](#-privacy-controls)
-- [💬 Chat Operations](#-chat-operations)
-- [📢 Broadcast & Stories](#-broadcast--stories)
-- [🧩 Advanced Features](#-advanced-features)
-
----
-
-## ✨ Features
-
-<table>
-<tr>
-<td>
-
-### Core Features
-- 🔥 **Multi-Device Support** - Connect without phone always online
-- ⚡ **WebSocket Based** - Fast and efficient communication
-- 💾 **Session Management** - Save and restore authentication
-- 🎯 **Event-Driven** - Reactive message handling
-- 📦 **TypeScript Ready** - Full type definitions included
-- 🚀 **Built on WhiskeySockets** - Latest Baileys implementation
-
-</td>
-<td>
-
-### Extended Features
-- 🎨 **Universal Button System** - Auto-converts any button format
-- 📸 **Media Handling** - Images, videos, audio, documents
-- 🤖 **Poll Support** - Create and manage polls
-- 📍 **Location Sharing** - Share locations with metadata
-- 🔔 **Newsletter Support** - Manage WhatsApp channels
-- 🎪 **Carousel Messages** - Multi-card interactive displays
-
-</td>
-</tr>
-</table>
+  - [Buttons & Interactive](#buttons--interactive-messages)
+  - [Extended Types](#extended-message-types)
+  - [Status & Stories](#personal-status--story-statusbroadcast)
+  - [Sticker Pack](#sticker-pack)
+  - [Shorthand Wrappers](#shorthand-wrappers)
+- [Message Modifications](#️-message-modifications)
+- [Media Download](#-media-download)
+- [Group Management](#-group-management)
+- [User Operations](#-user-operations)
+- [Privacy Controls](#-privacy-controls)
+- [Chat Operations](#-chat-operations)
+- [Newsletter / Channels](#-newsletter--channels)
+- [Events Reference](#-events-reference)
+- [Best Practices](#-best-practices)
+- [Disclaimer](#️-disclaimer)
 
 ---
 
 ## 📦 Installation
 
-### NPM
 ```bash
+# npm
 npm install @nexustechpro/baileys
-```
 
-### Yarn
-```bash
+# yarn
 yarn add @nexustechpro/baileys
 ```
 
-### Using Different Package Name
-Add to your `package.json`:
+**Drop-in replacement for `@whiskeysockets/baileys`** — add this to `package.json`:
 ```json
 {
   "dependencies": {
     "@whiskeysockets/baileys": "npm:@nexustechpro/baileys"
   }
 }
+
+//OR
+
+{
+    "dependencies": {
+        "@nexustechpro/baileys": "latest"
+    }
+}
 ```
 
-### Import
+**Import:**
 ```javascript
-// ESM
+// ESM (recommended)
 import makeWASocket from '@nexustechpro/baileys'
 
 // CommonJS
@@ -107,42 +85,49 @@ const { default: makeWASocket } = require('@nexustechpro/baileys')
 
 ---
 
-## 🔌 Quick Start
+## 🚀 Quick Start
+
 ```javascript
-import makeWASocket, { DisconnectReason, useMultiFileAuthState } from '@nexustechpro/baileys'
+import makeWASocket, {
+  useMultiFileAuthState,
+  DisconnectReason,
+  makeCacheableSignalKeyStore,
+  Browsers
+} from '@nexustechpro/baileys'
+import pino from 'pino'
 
-async function connectToWhatsApp() {
-    const { state, saveCreds } = await useMultiFileAuthState('auth_session')
-    
-    const sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: true,
-        browser: ['NexusTechPro', 'Chrome', '1.0.0']
-    })
+const connectToWhatsApp = async () => {
+  const { state, saveCreds } = await useMultiFileAuthState('auth_session')
+  const logger = pino({ level: 'silent' })
 
-    sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect } = update
-        if(connection === 'close') {
-            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
-            if(shouldReconnect) {
-                connectToWhatsApp()
-            }
-        } else if(connection === 'open') {
-            console.log('✅ Connected to WhatsApp!')
-        }
-    })
+  const sock = makeWASocket({
+    auth: {
+      creds: state.creds,
+      keys: makeCacheableSignalKeyStore(state.keys, logger)
+    },
+    browser: Browsers.ubuntu('Chrome'),
+    generateHighQualityLinkPreview: true,
+    logger
+  })
 
-    sock.ev.on('messages.upsert', async ({ messages }) => {
-        for(const msg of messages) {
-            if(!msg.key.fromMe && msg.message) {
-                await sock.sendMessage(msg.key.remoteJid, { 
-                    text: 'Hello from NexusTechPro Baileys!' 
-                })
-            }
-        }
-    })
+  sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
+    if (connection === 'close') {
+      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
+      if (shouldReconnect) connectToWhatsApp()
+    } else if (connection === 'open') {
+      console.log('✅ Connected!')
+    }
+  })
 
-    sock.ev.on('creds.update', saveCreds)
+  sock.ev.on('creds.update', saveCreds)
+
+  sock.ev.on('messages.upsert', async ({ messages }) => {
+    for (const msg of messages) {
+      if (!msg.key.fromMe && msg.message) {
+        await sock.sendMessage(msg.key.remoteJid, { text: 'Hello!' })
+      }
+    }
+  })
 }
 
 connectToWhatsApp()
@@ -152,67 +137,149 @@ connectToWhatsApp()
 
 ## 🔐 Authentication
 
-### QR Code Authentication
+### Pairing Code (Recommended)
+
+No QR scanning — just a phone number. Call `requestPairingCode` directly after creating the socket. The socket internally waits for the WebSocket to be ready before sending the request, so **no manual polling or delays needed on your end**.
+
 ```javascript
-import makeWASocket from '@nexustechpro/baileys'
+import makeWASocket, {
+  useMultiFileAuthState,
+  makeCacheableSignalKeyStore,
+  Browsers
+} from '@nexustechpro/baileys'
+import pino from 'pino'
+
+const { state, saveCreds } = await useMultiFileAuthState('auth_session')
+const logger = pino({ level: 'silent' })
 
 const sock = makeWASocket({
-    auth: state,
-    printQRInTerminal: true,
-    browser: ['NexusTechPro Bot', 'Chrome', '1.0.0']
-})
-```
-
-### Pairing Code Authentication
-```javascript
-const sock = makeWASocket({
-    auth: state,
-    printQRInTerminal: false
+  auth: {
+    creds: state.creds,
+    keys: makeCacheableSignalKeyStore(state.keys, logger)
+  },
+  browser: Browsers.ubuntu('Chrome'),
+  logger
 })
 
-if(!sock.authState.creds.registered) {
-    const phoneNumber = '1234567890' // without + or spaces
-    const code = await sock.requestPairingCode(phoneNumber)
-    console.log(`Pairing code: ${code}`)
+sock.ev.on('creds.update', saveCreds)
+
+// Just call it — no need to wait or poll for WS state
+if (!sock.authState.creds.registered) {
+  const code = await sock.requestPairingCode('1234567890') // digits only, no + or spaces
+  console.log('Pairing code:', code)
 }
 ```
 
 ### Custom Pairing Code
+
 ```javascript
-const phoneNumber = "628XXXXX"
-const code = await sock.requestPairingCode(phoneNumber.trim(), "NEXUS01")
-console.log("Your pairing code: " + code)
+// Must be exactly 8 characters
+const code = await sock.requestPairingCode('1234567890', 'NEXUS001')
+console.log('Custom code:', code)
+```
+
+### QR Code
+
+Scan the QR with your WhatsApp mobile app under **Linked Devices**.
+
+```javascript
+import makeWASocket, {
+  useMultiFileAuthState,
+  makeCacheableSignalKeyStore,
+  Browsers
+} from '@nexustechpro/baileys'
+import qrcode from 'qrcode-terminal'
+import pino from 'pino'
+
+const { state, saveCreds } = await useMultiFileAuthState('auth_session')
+const logger = pino({ level: 'silent' })
+
+const sock = makeWASocket({
+  auth: {
+    creds: state.creds,
+    keys: makeCacheableSignalKeyStore(state.keys, logger)
+  },
+  browser: Browsers.ubuntu('Chrome'),
+  logger
+})
+
+sock.ev.on('connection.update', ({ connection, qr, lastDisconnect }) => {
+  if (qr) qrcode.generate(qr, { small: true })
+  if (connection === 'open') console.log('✅ Connected!')
+  if (connection === 'close') {
+    const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
+    if (shouldReconnect) connectToWhatsApp()
+  }
+})
+
+sock.ev.on('creds.update', saveCreds)
+```
+
+Install the QR renderer: `npm install qrcode-terminal`
+
+---
+
+## 🌐 Browser Options
+
+The `browser` config tells WhatsApp what client you appear to be. This affects how WhatsApp treats your session and which features it enables.
+
+| Option | Value | Notes |
+|--------|-------|-------|
+| `Browsers.ubuntu('Chrome')` | `['Ubuntu', 'Chrome', '22.04.4']` | ✅ Recommended — stable, widely used |
+| `Browsers.macOS('Safari')` | `['Mac OS', 'Safari', '14.4.1']` | Good alternative |
+| `Browsers.windows('Chrome')` | `['Windows', 'Chrome', '10.0.22631']` | Works well |
+| `Browsers.baileys('Desktop')` | `['Baileys', 'Desktop', '6.5.0']` | Identifies as Baileys explicitly |
+| `Browsers.appropriate('Chrome')` | Auto-detects your OS | Uses your actual platform |
+
+```javascript
+import { Browsers } from '@nexustechpro/baileys'
+
+// Pass any browser string as the second argument (Chrome, Safari, Firefox, etc.)
+const sock = makeWASocket({
+  browser: Browsers.ubuntu('Chrome')   // recommended
+  // browser: Browsers.macOS('Safari')
+  // browser: Browsers.windows('Chrome')
+  // browser: Browsers.appropriate('Chrome') // auto-detects your server OS
+})
 ```
 
 ---
 
-## 💡 Socket Configuration
+## ⚙️ Socket Configuration
 
-### Cache Group Metadata (Recommended)
-```javascript
-const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false })
+Key options from `DEFAULT_CONNECTION_CONFIG`:
 
-const sock = makeWASocket({
-    cachedGroupMetadata: async (jid) => groupCache.get(jid)
-})
-
-sock.ev.on('groups.update', async ([event]) => {
-    const metadata = await sock.groupMetadata(event.id)
-    groupCache.set(event.id, metadata)
-})
-```
-
-### Improve Retry & Poll Decryption
 ```javascript
 const sock = makeWASocket({
-    getMessage: async (key) => await getMessageFromStore(key)
-})
-```
+  // Required
+  auth: { creds, keys },
 
-### Receive Notifications in WhatsApp App
-```javascript
-const sock = makeWASocket({
-    markOnlineOnConnect: false
+  // Browser identity
+  browser: Browsers.ubuntu('Chrome'),
+
+  // Link preview quality (true = upload full image, false = compressed local thumb)
+  generateHighQualityLinkPreview: true,
+
+  // Cache group metadata to avoid repeated fetches
+  cachedGroupMetadata: async (jid) => groupCache.get(jid),
+
+  // Suppress your online status when connecting
+  markOnlineOnConnect: false,
+
+  // Sync full message history on connect
+  syncFullHistory: false,
+
+  // Logger (use pino({ level: 'silent' }) to suppress logs)
+  logger: pino({ level: 'silent' }),
+
+  // Connection timeout in ms
+  connectTimeoutMs: 60000,
+
+  // Max retries for failed message sends
+  maxMsgRetryCount: 5,
+
+  // Custom message retrieval for retry/poll decryption
+  getMessage: async (key) => store.loadMessage(key.remoteJid, key.id),
 })
 ```
 
@@ -220,993 +287,806 @@ const sock = makeWASocket({
 
 ## 💾 Session Management
 
-Avoid scanning QR every time:
 ```javascript
-import makeWASocket, { useMultiFileAuthState } from '@nexustechpro/baileys'
+import { useMultiFileAuthState } from '@nexustechpro/baileys'
 
-const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys')
+const { state, saveCreds } = await useMultiFileAuthState('auth_session')
 const sock = makeWASocket({ auth: state })
 
 sock.ev.on('creds.update', saveCreds)
 ```
 
-> 💡 **Tip:** For production, store auth in a database instead of files.
-
----
-
-## 📡 Event Handling
-
-### Connection Updates
-```javascript
-sock.ev.on('connection.update', (update) => {
-    const { connection, lastDisconnect } = update
-    if(connection === 'close') {
-        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
-        console.log('Connection closed, reconnecting:', shouldReconnect)
-        if(shouldReconnect) connectToWhatsApp()
-    } else if(connection === 'open') {
-        console.log('Connection opened')
-    }
-})
-```
-
-### New Messages
-```javascript
-sock.ev.on('messages.upsert', async ({ messages }) => {
-    for(const msg of messages) {
-        console.log('New message:', msg)
-    }
-})
-```
-
-### Message Updates
-```javascript
-sock.ev.on('messages.update', async (updates) => {
-    for(const update of updates) {
-        console.log('Message updated:', update)
-    }
-})
-```
-
-### Decrypt Poll Votes
-```javascript
-sock.ev.on('messages.update', async (event) => {
-    for(const { key, update } of event) {
-        if(update.pollUpdates) {
-            const pollCreation = await getMessage(key)
-            if(pollCreation) {
-                console.log('Poll update:', getAggregateVotesInPollMessage({
-                    message: pollCreation,
-                    pollUpdates: update.pollUpdates,
-                }))
-            }
-        }
-    }
-})
-```
-
----
-
-## 🛠️ Data Store
-```javascript
-import makeWASocket, { makeInMemoryStore } from '@nexustechpro/baileys'
-
-const store = makeInMemoryStore({})
-store.readFromFile('./baileys_store.json')
-
-setInterval(() => {
-    store.writeToFile('./baileys_store.json')
-}, 10_000)
-
-const sock = makeWASocket({})
-store.bind(sock.ev)
-
-sock.ev.on('chats.upsert', () => {
-    console.log('Got chats:', store.chats.all())
-})
-
-sock.ev.on('contacts.upsert', () => {
-    console.log('Got contacts:', Object.values(store.contacts))
-})
-```
-
-> ⚠️ **Important:** Build your own data store for production. In-memory storage wastes RAM.
-
----
-
-## 🔑 WhatsApp IDs
-
-- **Personal Chats**: `[country code][phone number]@s.whatsapp.net`
-  - Example: `1234567890@s.whatsapp.net`
-- **Groups**: `[group id]@g.us`
-  - Example: `123456789-987654321@g.us`
-- **Broadcast Lists**: `[timestamp]@broadcast`
-- **Status**: `status@broadcast`
+> 💡 For production, store credentials in a database (MongoDB, Redis, PostgreSQL) rather than the filesystem. The `useMultiFileAuthState` helper is for development only.
 
 ---
 
 ## 💬 Sending Messages
 
-### Text & Special Messages
+`sock.sendMessage(jid, content, options?)` handles **every message type**. The `jid` can be a user, group, status broadcast, or newsletter.
 
-#### Text Message
 ```javascript
+// JID formats
+'1234567890@s.whatsapp.net'     // personal chat
+'123456789-987654321@g.us'      // group
+'status@broadcast'               // story/status
+'120363...@newsletter'           // newsletter channel
+```
+
+### Text Messages
+
+```javascript
+// Plain text
 await sock.sendMessage(jid, { text: 'Hello World!' })
-```
 
-### Shorthand Wrappers
-We provide convenient shorthands for common message types:
+// With link preview (auto-detects URLs in text)
+await sock.sendMessage(jid, { text: 'Check this out: https://github.com' })
 
-```javascript
-// Text
-await sock.sendText(jid, 'Hello World!', options)
-
-// Media (Image/Video/Document)
-await sock.sendImage(jid, { url: './image.jpg' }, 'Image caption', options)
-await sock.sendVideo(jid, buffer, 'Video caption', options)
-await sock.sendDocument(jid, { url: './doc.pdf' }, 'Document caption', options)
-await sock.sendAudio(jid, { url: './audio.mp3' }, options)
-
-// Other Message Types
-await sock.sendLocation(jid, { degreesLatitude: 24.12, degreesLongitude: 55.11, name: "Location" }, options)
-await sock.sendPoll(jid, 'Favorite Color?', ['Red', 'Blue'], false, options)
-await sock.sendReaction(jid, message.key, '💖', options)
-await sock.sendSticker(jid, { url: './sticker.webp' }, options)
-await sock.sendContact(jid, { vcard }, options)
-await sock.sendForward(jid, message, { force: true })
-```
-
-### AI Messages
-You can send a message with an AI indicator label (shown as "enhanced AI feature" to recipients).
-```javascript
-await sock.sendMessage(jid, { 
-    text: 'This is an AI generated response', 
-    ai: true 
-})
-```
-
-#### Quote Message (works with all types)
-```javascript
+// Quote/reply
 await sock.sendMessage(jid, { text: 'This is a reply' }, { quoted: message })
+
+// Mention users
+await sock.sendMessage(jid, {
+  text: '@1234567890 hey!',
+  mentions: ['1234567890@s.whatsapp.net']
+})
+
+// AI-generated label
+await sock.sendMessage(jid, { text: 'AI response here', ai: true })
 ```
 
-#### Mention User (works with most types)
+### Media Messages
+
+> You can pass `{ url: '...' }`, a `Buffer`, a file path string, or `{ stream: Stream }` for any media type.
+
+#### Image
+```javascript
+// From URL
+await sock.sendMessage(jid, {
+  image: { url: 'https://example.com/image.jpg' },
+  caption: 'Caption here'
+})
+
+// From Buffer
+await sock.sendMessage(jid, { image: buffer, caption: 'From buffer' })
+
+// From file
+await sock.sendMessage(jid, { image: fs.readFileSync('./image.jpg') })
+
+// View once
+await sock.sendMessage(jid, { image: { url: './secret.jpg' }, viewOnce: true })
+```
+
+#### Video
 ```javascript
 await sock.sendMessage(jid, {
-    text: '@12345678901',
-    mentions: ['12345678901@s.whatsapp.net']
+  video: { url: './video.mp4' },
+  caption: 'Watch this!',
+  gifPlayback: false, // true for GIF
+  ptv: false          // true for video note (circle)
 })
 ```
 
-#### Mention Status
-```javascript
-await sock.sendStatusMentions(
-    {
-        text: "Hello", // or image / video / audio (url or buffer)
-    },
-    [
-        "123456789123456789@g.us",
-        "123456789@s.whatsapp.net",
-        // Enter jid chat here
-    ] 
-)
-```
-
-#### Result Poll From Newsletter
+#### Audio
 ```javascript
 await sock.sendMessage(jid, {
-    pollResult: {
-        name: "Text poll",
-        votes: [["Options 1", 10], ["Options 2", 10]], // 10 for fake polling count results
-    }
-}, { quoted: message })
-```
-
-#### Send Album Message
-```javascript
-await sock.sendAlbumMessage(
-    jid,
-    [
-        {
-            image: { url: "https://example.jpg" }, // or buffer
-            caption: "Hello World",
-        },
-        {
-            video: { url: "https://example.mp4" }, // or buffer
-            caption: "Hello World",
-        },
-    ],
-    { 
-        quoted: message, 
-        delay: 2000 // number in milliseconds
-    }
-)
-```
-
-#### Request Payment
-```javascript
-// Example non media sticker
-await sock.sendMessage(jid, {
-    requestPayment: {      
-        currency: "IDR",
-        amount: "10000000",
-        from: "123456@s.whatsapp.net",
-        note: "Payment Request",
-        background: { /* background of the message */ }
-    }
-}, { quoted: message })
-
-// With media sticker buffer
-await sock.sendMessage(jid, {
-    requestPayment: {      
-        currency: "IDR",
-        amount: "10000000",
-        from: "123456@s.whatsapp.net",
-        sticker: buffer,
-        background: { /* background of the message */ }
-    }
-}, { quoted: message })
-
-// With media sticker url
-await sock.sendMessage(jid, {
-    requestPayment: {      
-        currency: "IDR",
-        amount: "10000000",
-        from: "123456@s.whatsapp.net",
-        sticker: { url: "https://example.com/sticker.webp" },
-        background: { /* background of the message */ }
-    }
-}, { quoted: message })
-```
-
-#### Event Message
-```javascript
-await sock.sendMessage(jid, { 
-    event: {
-        isCanceled: false, // or true for cancel event 
-        name: "Event Name", 
-        description: "Event Description",
-        location: { 
-            degreesLatitude: -0, 
-            degreesLongitude: -0 
-        },
-        link: "https://call-link.example.com",
-        startTime: m.messageTimestamp.low,
-        endTime: m.messageTimestamp.low + 86400, // 86400 is day in seconds
-        extraGuestsAllowed: true // or false
-    }
-}, { quoted: message })
-```
-
-#### Product Message
-```javascript
-await sock.sendMessage(jid, {
-    productMessage: {
-        title: "Product Title",
-        description: "Product Description",
-        thumbnail: "https://example.png",
-        productId: "123456789",
-        retailerId: "STORE",
-        url: "https://example.png",
-        body: "Product Body",
-        footer: "Product Footer",
-        buttons: [
-            {
-                name: "cta_url",
-                buttonParamsJson: JSON.stringify({
-                    display_text: "Visit Site",
-                    url: "https://example.com"
-                })
-            }
-        ]
-    }
-}, { quoted: message })
-```
-
-#### Carousel Message
-```javascript
-await sock.sendMessage(jid, {
-    carouselMessage: {
-        caption: "Click URL",
-        footer: "Powered By NexusTechPro",
-        cards: [
-            // Card Mode Product
-            {
-                headerTitle: "`</> Owner Bot </>`",
-                imageUrl: "https://example.com/image.jpg",
-                productTitle: "Premium Bot",
-                productDescription: "Get premium access",
-                bodyText: "[NexusTechPro]\n- Important chat only\n- Don't call owner",
-                buttons: [
-                    {
-                        name: "cta_call",
-                        params: { 
-                            display_text: "Contact Owner", 
-                            phone_number: "+1234567890" 
-                        }
-                    }
-                ]
-            },
-            // Card Mode Image
-            {
-                headerTitle: "`</> Bot Assistant </>`",
-                imageUrl: "https://example.com/image2.jpg",
-                bodyText: "[AI Assistant]\n- Don't spam bot\n- Don't call bot",
-                buttons: [
-                    {
-                        name: "cta_url",
-                        params: {
-                            display_text: "Chat Bot",
-                            url: "https://wa.me/1234567890",
-                            merchant_url: "https://wa.me/1234567890"
-                        }
-                    }
-                ]
-            }
-        ]
-    }
-}, { quoted: message })
-```
-
-#### Forward Messages
-```javascript
-const msg = getMessageFromStore() // implement this on your end
-await sock.sendMessage(jid, { forward: msg })
-```
-
-#### Location Message
-```javascript
-await sock.sendMessage(jid, {
-    location: {
-        degreesLatitude: 24.121231,
-        degreesLongitude: 55.1121221,
-        name: "Location Name",
-        address: "Location Address"
-    }
+  audio: { url: './audio.mp3' },
+  mimetype: 'audio/mp4',
+  ptt: true // true = voice message, false = audio file
 })
 ```
 
-#### Contact Message
-```javascript
-const vcard = 'BEGIN:VCARD\n'
-    + 'VERSION:3.0\n'
-    + 'FN:John Doe\n'
-    + 'ORG:NexusTechPro;\n'
-    + 'TEL;type=CELL;type=VOICE;waid=1234567890:+1 234 567 890\n'
-    + 'END:VCARD'
+> Convert to voice-compatible format: `ffmpeg -i input.mp4 -avoid_negative_ts make_zero -ac 1 output.ogg`
 
+#### Document
+```javascript
 await sock.sendMessage(jid, {
-    contacts: {
-        displayName: 'John Doe',
-        contacts: [{ vcard }]
-    }
+  document: { url: './file.pdf' },
+  fileName: 'document.pdf',
+  mimetype: 'application/pdf',
+  caption: 'Here is the file'
 })
 ```
 
-#### Reaction Message
+#### Sticker
+```javascript
+await sock.sendMessage(jid, { sticker: { url: './sticker.webp' } })
+```
+
+#### Location
 ```javascript
 await sock.sendMessage(jid, {
-    react: {
-        text: '💖', // use empty string to remove reaction
-        key: message.key
-    }
+  location: {
+    degreesLatitude: 24.121231,
+    degreesLongitude: 55.1121221,
+    name: 'Location Name',
+    address: 'Full Address Here'
+  }
+})
+```
+
+#### Contact
+```javascript
+const vcard = 'BEGIN:VCARD\nVERSION:3.0\nFN:John Doe\nORG:NexusTechPro;\nTEL;type=CELL;waid=1234567890:+1 234 567 890\nEND:VCARD'
+
+await sock.sendMessage(jid, {
+  contacts: {
+    displayName: 'John Doe',
+    contacts: [{ vcard }]
+  }
+})
+```
+
+#### Reaction
+```javascript
+await sock.sendMessage(jid, {
+  react: {
+    text: '💖',       // empty string removes reaction
+    key: message.key
+  }
+})
+```
+
+#### Poll
+```javascript
+await sock.sendMessage(jid, {
+  poll: {
+    name: 'Favorite Color?',
+    values: ['Red', 'Blue', 'Green'],
+    selectableOptionsCount: 1,
+    toAnnouncementGroup: false
+  }
 })
 ```
 
 #### Pin Message
 ```javascript
 await sock.sendMessage(jid, {
-    pin: {
-        type: 1, // 0 to remove
-        time: 86400, // 24 hours in seconds
-        key: message.key
-    }
+  pin: {
+    type: 1,          // 0 to unpin
+    time: 86400,      // 24h = 86400 | 7d = 604800 | 30d = 2592000
+    key: message.key
+  }
 })
 ```
-
-**Pin Time Options:**
-
-| Time | Seconds   |
-|------|-----------|
-| 24h  | 86,400    |
-| 7d   | 604,800   |
-| 30d  | 2,592,000 |
 
 #### Keep Message
 ```javascript
 await sock.sendMessage(jid, {
-    keep: message.key,
-    type: 1, // 2 to unpin
-    time: 86400
+  keep: message.key,
+  type: 1,  // 2 to unkeep
+  time: 86400
 })
 ```
 
-**Keep Time Options:**
+#### Disappearing Messages
+```javascript
+// Enable (seconds: 86400 = 24h, 604800 = 7d, 7776000 = 90d)
+await sock.sendMessage(jid, { disappearingMessagesInChat: 86400 })
 
-| Time | Seconds   |
-|------|-----------|
-| 24h  | 86,400    |
-| 7d   | 604,800   |
-| 30d  | 2,592,000 |
+// Disable
+await sock.sendMessage(jid, { disappearingMessagesInChat: false })
+```
 
-#### Poll Message
+#### Forward Message
+```javascript
+await sock.sendMessage(jid, { forward: message, force: true })
+```
+
+#### Edit Message
 ```javascript
 await sock.sendMessage(jid, {
-    poll: {
-        name: 'Favorite Color?',
-        values: ['Red', 'Blue', 'Green', 'Yellow'],
-        selectableCount: 1,
-        toAnnouncementGroup: false
-    }
+  text: 'Updated text',
+  edit: originalMessage.key
 })
 ```
 
-#### Link Preview
+#### Delete Message
 ```javascript
-await sock.sendMessage(jid, {
-    text: 'Check out https://github.com/nexustechpro2/baileys'
-})
+const sent = await sock.sendMessage(jid, { text: 'hello' })
+await sock.sendMessage(jid, { delete: sent.key })
 ```
 
 ---
 
-### Media Messages
+### 🎭 Fake Quoted Messages
 
-> 📝 **Note:** You can pass `{ stream: Stream }`, `{ url: Url }`, or `Buffer` directly
+Fake a reply without an actual original message — useful for AI responses, status reposts, custom UIs and more. Only the bare minimum fields are needed — WhatsApp fills in the rest visually.
 
-#### Image Message
+#### Text Quote
 ```javascript
-// From URL
-await sock.sendMessage(jid, {
-    image: { url: 'https://example.com/image.jpg' },
-    caption: 'Beautiful image!'
-})
-
-// From Buffer
-await sock.sendMessage(jid, {
-    image: buffer,
-    caption: 'Image from buffer'
-})
-
-// From File
-await sock.sendMessage(jid, {
-    image: fs.readFileSync('./image.jpg'),
-    caption: 'Local image'
+await sock.sendMessage(jid, { text: 'Actual message' }, {
+  quoted: {
+    key: { remoteJid: jid, fromMe: false, id: 'FAKE_' + Date.now(), participant: '1234567890@s.whatsapp.net' },
+    message: { conversation: 'Fake quoted text' }
+  }
 })
 ```
 
-#### Video Message
+#### Image Quote
 ```javascript
-await sock.sendMessage(jid, {
-    video: { url: './video.mp4' },
-    caption: 'Check this out!',
-    gifPlayback: false, // set true for GIF
-    ptv: false // set true for video note
+await sock.sendMessage(jid, { text: 'Replying to image' }, {
+  quoted: {
+    key: { remoteJid: jid, fromMe: false, id: 'FAKE_' + Date.now(), participant: '1234567890@s.whatsapp.net' },
+    message: { imageMessage: { caption: 'Fake image caption' } }
+  }
 })
 ```
 
-#### GIF Message
+#### Sticker Quote
 ```javascript
-await sock.sendMessage(jid, {
-    video: fs.readFileSync('Media/gif.mp4'),
-    caption: 'Funny GIF',
-    gifPlayback: true
+await sock.sendMessage(jid, { text: 'Replying to sticker' }, {
+  quoted: {
+    key: { remoteJid: jid, fromMe: false, id: 'FAKE_' + Date.now(), participant: '1234567890@s.whatsapp.net' },
+    message: { stickerMessage: {} }
+  }
 })
 ```
 
-#### Audio Message
+#### AI / Bot Quote
 ```javascript
-await sock.sendMessage(jid, {
-    audio: { url: './audio.mp3' },
-    mimetype: 'audio/mp4',
-    ptt: true // voice message
+await sock.sendMessage(jid, { text: 'My response' }, {
+  quoted: {
+    key: { remoteJid: jid, fromMe: true, id: 'FAKE_' + Date.now() },
+    message: { extendedTextMessage: { text: 'AI generated this', title: 'NexusAI' } }
+  }
 })
 ```
 
-> 💡 **Audio Conversion Tip:**
-> ```bash
-> ffmpeg -i input.mp4 -avoid_negative_ts make_zero -ac 1 output.ogg
-> ```
-
-#### Document
+#### Status Quote
 ```javascript
-await sock.sendMessage(jid, {
-    document: { url: './document.pdf' },
-    fileName: 'document.pdf',
-    mimetype: 'application/pdf'
+await sock.sendMessage(jid, { text: 'Replying to your status!' }, {
+  quoted: {
+    key: { remoteJid: 'status@broadcast', fromMe: false, id: 'FAKE_' + Date.now(), participant: '1234567890@s.whatsapp.net' },
+    message: { conversation: 'Original status text' }
+  }
 })
 ```
 
-#### Sticker
-```javascript
-await sock.sendMessage(jid, {
-    sticker: { url: './sticker.webp' }
-})
-```
+#### Key Fields
 
-#### Sticker Pack
+| Field | Description |
+|-------|-------------|
+| `remoteJid` | Where the quoted message appears to be from (`jid`, `status@broadcast`, group etc.) |
+| `fromMe` | `true` = appears sent by you/bot, `false` = appears sent by someone else |
+| `id` | Any unique string — `'FAKE_' + Date.now()` avoids collisions |
+| `participant` | Required in groups/status — the person who appears to have sent it |
 
-### Method 1: Direct Socket Method (Recommended)
-```javascript
-await sock.stickerPackMessage(jid, {
-    name: 'My Stickers',
-    publisher: 'Your Bot',
-    description: 'Collection of stickers',
-    stickers: [
-        { data: buffer, emojis: ['😊'] },
-        { data: './sticker.png', emojis: ['😂'] },
-        { data: './sticker.webp', emojis: ['🎉'] },
-        { data: 'https://example.com/sticker.jpg', emojis: ['❤️'] }
-    ],
-    cover: buffer
-}, { quoted: message });
-```
-
-### Method 2: Via sendMessage
-```javascript
-await sock.sendMessage(jid, {
-    stickerPack: {
-        name: 'My Stickers',
-        publisher: 'Your Bot',
-        description: 'Collection of stickers',
-        stickers: [
-            { data: buffer, emojis: ['😊'] },
-            { data: './sticker.png', emojis: ['😂'] },
-            { data: './sticker.webp', emojis: ['🎉'] },
-            { data: 'https://example.com/sticker.jpg', emojis: ['❤️'] }
-        ],
-        cover: buffer
-    }
-}, { quoted: message });
-```
-
-### Supported Image Formats
-
-| Format | Support | Notes |
-|--------|---------|-------|
-| **WebP** | ✅ Full | Used as-is, no conversion needed |
-| **PNG** | ✅ Full | Auto-converts to WebP |
-| **JPG/JPEG** | ✅ Full | Auto-converts to WebP |
-| **GIF** | ✅ Limited | Converts to static WebP |
-| **BMP** | ✅ Full | Auto-converts to WebP |
-| **Video** | ❌ Not supported | Only static images |
-
-### Key Features
-
-✅ **Automatic batching** - Splits packs >60 stickers  
-✅ **Compression** - Auto-compresses stickers >1MB  
-✅ **Auto-conversion** - Converts PNG, JPG, GIF, BMP to WebP  
-✅ **Multiple formats** - Supports buffers, file paths, URLs  
-✅ **Rate limiting** - 2-second delays between batches  
-✅ **Error handling** - Gracefully skips invalid stickers  
-
-#### View Once Message
-```javascript
-await sock.sendMessage(jid, {
-    image: { url: './secret.jpg' },
-    viewOnce: true,
-    caption: 'View once only!'
-})
-```
 
 ---
 
 ### Buttons & Interactive Messages
 
-#### Simple Text with Buttons
+#### Text with Buttons
 ```javascript
 await sock.sendMessage(jid, {
-    text: "Choose an option",
-    footer: "© NexusTechPro",
-    buttons: [
+  text: 'Choose an option',
+  footer: '© NexusTechPro',
+  buttons: [
+    {
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({ display_text: 'Option 1', id: 'opt1' })
+    },
+    {
+      name: 'cta_url',
+      buttonParamsJson: JSON.stringify({
+        display_text: 'Visit Website',
+        url: 'https://nexustechpro.com',
+        merchant_url: 'https://nexustechpro.com'
+      })
+    }
+  ]
+})
+```
+
+#### Image / Video / Document with Buttons
+```javascript
+await sock.sendMessage(jid, {
+  image: { url: 'https://example.com/image.jpg' },
+  caption: 'Description',
+  footer: '© NexusTechPro',
+  buttons: [
+    {
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({ display_text: 'Reply', id: 'btn1' })
+    }
+  ]
+})
+```
+
+#### All Button Types
+
+| Type | `name` value | Required params |
+|------|-------------|-----------------|
+| Quick Reply | `quick_reply` | `display_text`, `id` |
+| URL | `cta_url` | `display_text`, `url`, `merchant_url` |
+| Call | `cta_call` | `display_text`, `phone_number` |
+| Copy | `cta_copy` | `display_text`, `copy_code` |
+| List/Select | `single_select` | `title`, `sections[].rows[]` |
+| Call Permission | `call_permission_request` | `has_multiple_buttons` |
+
+#### List / Single Select
+```javascript
+{
+  name: 'single_select',
+  buttonParamsJson: JSON.stringify({
+    title: 'Select Option',
+    sections: [{
+      title: 'Section 1',
+      highlight_label: 'Popular',
+      rows: [
+        { title: 'Option 1', description: 'Desc 1', id: 'opt1' },
+        { title: 'Option 2', description: 'Desc 2', id: 'opt2' }
+      ]
+    }]
+  })
+}
+```
+
+#### Full Interactive Message
+```javascript
+await sock.sendMessage(jid, {
+  interactiveMessage: {
+    title: 'Interactive',
+    footer: '© NexusTechPro',
+    image: { url: 'https://example.com/image.jpg' },
+    nativeFlowMessage: {
+      messageParamsJson: JSON.stringify({ /* optional advanced config */ }),
+      buttons: [
         {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Option 1",
-                id: "opt1"
-            })
+          name: 'single_select',
+          buttonParamsJson: JSON.stringify({
+            title: 'Select',
+            sections: [{ title: 'Options', rows: [{ title: 'Option 1', id: 'opt1' }] }]
+          })
         },
         {
-            name: "cta_url",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Visit Website",
-                url: "https://nexustechpro.com",
-                merchant_url: "https://nexustechpro.com"
-            })
+          name: 'cta_copy',
+          buttonParamsJson: JSON.stringify({ display_text: 'Copy Code', copy_code: 'NEXUS2025' })
         }
-    ]
+      ]
+    }
+  }
 })
 ```
 
-#### Image with Buttons
+#### interactiveButtons Shorthand
+
 ```javascript
+// Without media header
 await sock.sendMessage(jid, {
-    image: { url: "https://example.com/image.jpg" },
-    caption: "Description",
-    footer: "© NexusTechPro",
-    buttons: [
-        {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Reply",
-                id: "btn1"
-            })
-        }
-    ]
-})
-```
+  text: 'Description of Message',
+  title: 'Title of Message',
+  subtitle: 'Subtitle Message',
+  footer: 'Footer Message',
+  interactiveButtons: [
+    {
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({ display_text: 'Quick Reply', id: 'button_1' })
+    },
+    {
+      name: 'cta_url',
+      buttonParamsJson: JSON.stringify({ display_text: 'Visit Website', url: 'https://nexustechpro.com' })
+    }
+  ]
+}, { quoted: message })
 
-#### Video with Buttons
-```javascript
+// With image header
 await sock.sendMessage(jid, {
-    video: { url: "https://example.com/video.mp4" },
-    caption: "Watch this",
-    footer: "© NexusTechPro",
-    buttons: [
-        {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Like",
-                id: "like"
-            })
-        }
-    ]
-})
-```
+  image: { url: 'https://example.jpg' }, // or buffer
+  caption: 'Description of Message',
+  title: 'Title of Message',
+  subtitle: 'Subtitle Message',
+  footer: 'Footer Message',
+  media: true,
+  interactiveButtons: [
+    {
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({ display_text: 'Quick Reply', id: 'button_1' })
+    },
+    {
+      name: 'cta_url',
+      buttonParamsJson: JSON.stringify({ display_text: 'Visit Website', url: 'https://nexustechpro.com' })
+    }
+  ]
+}, { quoted: message })
 
-#### Document with Buttons
-```javascript
+// With product header
 await sock.sendMessage(jid, {
-    document: { url: "./file.pdf" },
-    fileName: "Document.pdf",
-    mimetype: "application/pdf",
-    caption: "Read this",
-    footer: "© NexusTechPro",
-    buttons: [
-        {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Download",
-                id: "download"
-            })
-        }
-    ]
-})
+  product: {
+    productImage: { url: 'https://example.jpg' }, // or buffer
+    productImageCount: 1,
+    title: 'Product Title',
+    description: 'Product Description',
+    priceAmount1000: 20000 * 1000,
+    currencyCode: 'USD',
+    retailerId: 'Retail',
+    url: 'https://example.com'
+  },
+  businessOwnerJid: '1234@s.whatsapp.net',
+  caption: 'Description of Message',
+  title: 'Title of Message',
+  footer: 'Footer Message',
+  media: true,
+  interactiveButtons: [
+    {
+      name: 'quick_reply',
+      buttonParamsJson: JSON.stringify({ display_text: 'Quick Reply', id: 'button_1' })
+    },
+    {
+      name: 'cta_url',
+      buttonParamsJson: JSON.stringify({ display_text: 'Visit Website', url: 'https://nexustechpro.com' })
+    }
+  ]
+}, { quoted: message })
 ```
 
----
+#### Classic Buttons (Old Style)
 
-### All Button Types
+For compatibility with older WhatsApp versions or specific use cases:
 
-#### 1. Quick Reply
 ```javascript
-{
-    name: "quick_reply",
-    buttonParamsJson: JSON.stringify({
-        display_text: "Quick Reply",
-        id: "button_id"
-    })
-}
-```
-
-#### 2. URL Button
-```javascript
-{
-    name: "cta_url",
-    buttonParamsJson: JSON.stringify({
-        display_text: "Visit Website",
-        url: "https://nexustechpro.com",
-        merchant_url: "https://nexustechpro.com"
-    })
-}
-```
-
-#### 3. Call Button
-```javascript
-{
-    name: "cta_call",
-    buttonParamsJson: JSON.stringify({
-        display_text: "Call Us",
-        phone_number: "+1234567890"
-    })
-}
-```
-
-#### 4. Copy Button
-```javascript
-{
-    name: "cta_copy",
-    buttonParamsJson: JSON.stringify({
-        display_text: "Copy Code",
-        id: "copy_id",
-        copy_code: "PROMO2025"
-    })
-}
-```
-
-#### 5. List/Single Select
-```javascript
-{
-    name: "single_select",
-    buttonParamsJson: JSON.stringify({
-        title: "Select Option",
-        sections: [{
-            title: "Section 1",
-            highlight_label: "Popular",
-            rows: [
-                { title: "Option 1", description: "Desc 1", id: "opt1" },
-                { title: "Option 2", description: "Desc 2", id: "opt2" }
-            ]
-        }]
-    })
-}
-```
-
-#### 6. Call Permission Request
-```javascript
-{
-    name: "call_permission_request",
-    buttonParamsJson: JSON.stringify({
-        has_multiple_buttons: true
-    })
-}
-```
-
----
-
-### Classic Buttons (Old Style)
-
-For compatibility with older WhatsApp versions:
-```javascript
+// Text with classic buttons
 await sock.sendMessage(jid, {
-    text: "Message with classic buttons",
-    footer: "Footer text",
-    buttons: [
-        {
-            buttonId: "btn1",
-            buttonText: { displayText: "Button 1" },
-            type: 1
-        },
-        {
-            buttonId: "btn2",
-            buttonText: { displayText: "Button 2" },
-            type: 1
-        }
-    ],
-    headerType: 1
+  text: 'Message with classic buttons',
+  footer: 'Footer text',
+  buttons: [
+    { buttonId: 'btn1', buttonText: { displayText: 'Button 1' }, type: 1 },
+    { buttonId: 'btn2', buttonText: { displayText: 'Button 2' }, type: 1 }
+  ],
+  headerType: 1
+})
+
+// Image header with classic buttons
+await sock.sendMessage(jid, {
+  image: { url: 'https://example.com/image.jpg' },
+  caption: 'Body text',
+  footer: 'Footer',
+  buttons: [
+    { buttonId: 'btn1', buttonText: { displayText: 'Button 1' }, type: 1 }
+  ],
+  headerType: 3
 })
 ```
 
-#### Header Types (Classic Buttons)
+**Header Types:**
 
 | Value | Type | Description |
 |-------|------|-------------|
 | `0` | EMPTY | No header |
-| `1` | TEXT | Text header (use `title` field) |
+| `1` | TEXT | Text header |
 | `2` | DOCUMENT | Document header |
 | `3` | IMAGE | Image header |
 | `4` | VIDEO | Video header |
 | `5` | LOCATION | Location header |
 
-#### Button Types (Classic Buttons)
+**Button Types:**
 
 | Value | Type | Description |
 |-------|------|-------------|
 | `1` | RESPONSE | Standard clickable button |
 | `2` | NATIVE_FLOW | Native flow button |
 
-**Example with Image Header:**
+---
+
+### Extended Message Types
+
+All of these go through `sock.sendMessage` — the library detects the type automatically.
+
+#### Album
 ```javascript
 await sock.sendMessage(jid, {
-    image: { url: "https://example.com/image.jpg" },
-    caption: "Body text",
-    footer: "Footer",
+  albumMessage: [
+    { image: { url: 'https://example.com/1.jpg' }, caption: 'Photo 1' },
+    { video: { url: 'https://example.com/2.mp4' }, caption: 'Video 1' }
+  ]
+}, { quoted: message })
+
+// Shorthand
+await sock.sendAlbumMessage(jid, [
+  { image: { url: 'https://example.com/1.jpg' }, caption: 'Photo 1' }
+], message)
+```
+
+#### Carousel
+```javascript
+await sock.sendMessage(jid, {
+  carouselMessage: {
+    caption: 'Our Products',
+    footer: 'Powered by NexusTechPro',
+    cards: [
+      {
+        headerTitle: 'Card 1',
+        imageUrl: 'https://example.com/1.jpg',
+        bodyText: 'Description',
+        buttons: [{ name: 'cta_url', params: { display_text: 'Visit', url: 'https://nexustechpro.com' } }]
+      },
+      {
+        headerTitle: 'Product Card',
+        imageUrl: 'https://example.com/2.jpg',
+        productTitle: 'Premium Bot',
+        productDescription: 'Get access',
+        bodyText: 'Details here',
+        buttons: [{ name: 'cta_call', params: { display_text: 'Call', phone_number: '+1234567890' } }]
+      }
+    ]
+  }
+})
+```
+
+#### Event
+```javascript
+await sock.sendMessage(jid, {
+  event: {
+    isCanceled: false,
+    name: 'Event Name',
+    description: 'Event Description',
+    location: { degreesLatitude: 0, degreesLongitude: 0, name: 'Venue' },
+    joinLink: 'https://meet.example.com/event',
+    startTime: Math.floor(Date.now() / 1000),
+    endTime: Math.floor(Date.now() / 1000) + 86400,
+    extraGuestsAllowed: true
+  }
+}, { quoted: message })
+```
+
+#### Product Message
+```javascript
+await sock.sendMessage(jid, {
+  productMessage: {
+    title: 'Product Title',
+    description: 'Product Description',
+    thumbnail: 'https://example.com/img.png',
+    productId: '123456789',
+    retailerId: 'STORE',
+    url: 'https://example.com',
+    body: 'Product Body',
+    footer: 'Product Footer',
     buttons: [
-        { buttonId: "btn1", buttonText: { displayText: "Button 1" }, type: 1 }
+      {
+        name: 'cta_url',
+        buttonParamsJson: JSON.stringify({ display_text: 'Buy Now', url: 'https://example.com' })
+      }
+    ]
+  }
+}, { quoted: message })
+```
+
+#### Request Payment
+```javascript
+// With note
+await sock.sendMessage(jid, {
+  requestPayment: {
+    currency: 'IDR',
+    amount: '10000000',
+    from: '123456@s.whatsapp.net',
+    note: 'Payment for order #123'
+  }
+}, { quoted: message })
+
+// With sticker (URL or Buffer)
+await sock.sendMessage(jid, {
+  requestPayment: {
+    currency: 'IDR',
+    amount: '10000000',
+    from: '123456@s.whatsapp.net',
+    sticker: { url: 'https://example.com/sticker.webp' }
+  }
+})
+```
+
+#### Poll Result (Newsletter Style)
+```javascript
+await sock.sendMessage(jid, {
+  pollResult: {
+    name: 'Poll Title',
+    votes: [['Option A', 42], ['Option B', 17]]
+  }
+}, { quoted: message })
+```
+
+#### Group Story
+
+Post a story/status visible only to a specific group.
+
+```javascript
+// Via sendMessage
+await sock.sendMessage(jid, {
+  groupStatus: {
+    text: 'Hello group!'
+    // or: image: { url: '...' }, video: { url: '...' }, audio: { url: '...' }
+  }
+})
+
+// Via dedicated shorthand
+await sock.sendGroupStatusMessage(groupJid, {
+  text: 'Hello group!'
+})
+
+// With media
+await sock.sendGroupStatusMessage(groupJid, {
+  image: { url: 'https://example.com/image.jpg' },
+  caption: 'Group story caption'
+})
+```
+
+#### Personal Status / Story (status@broadcast)
+
+Post a story visible to all your contacts or a specific list.
+
+```javascript
+// Text story
+await sock.sendMessage('status@broadcast', {
+  text: 'My status update!'
+})
+
+// Image story
+await sock.sendMessage('status@broadcast', {
+  image: { url: 'https://example.com/image.jpg' },
+  caption: 'Caption here'
+})
+
+// Video story
+await sock.sendMessage('status@broadcast', {
+  video: { url: './video.mp4' },
+  caption: 'Video story'
+})
+
+// Send to specific contacts only
+await sock.sendMessage('status@broadcast', {
+  text: 'Private status',
+  statusJidList: [
+    '1234567890@s.whatsapp.net',
+    '0987654321@s.whatsapp.net'
+  ]
+})
+```
+
+#### Status Mention (tag someone in your story)
+
+Mention specific users or groups in a story. They get a private notification.
+
+```javascript
+// Text status with mention
+await sock.sendStatusMentions(groupJid,
+  { text: 'Hey @someone check this out!' },
+  ['1234567890@s.whatsapp.net']
+)
+
+// Image status with mention
+await sock.sendStatusMentions(groupJid,
+  {
+    image: { url: 'https://example.com/image.jpg' },
+    caption: 'Caption'
+  },
+  ['1234567890@s.whatsapp.net', '123456789123456789@g.us']
+)
+
+// Video status with mention
+await sock.sendStatusMentions(groupJid,
+  { video: { url: './video.mp4' } },
+  ['1234567890@s.whatsapp.net']
+)
+
+// Audio status with mention
+await sock.sendStatusMentions(groupJid,
+  { audio: { url: './audio.mp3' }, ptt: true },
+  ['1234567890@s.whatsapp.net']
+)
+```
+
+#### Sticker Pack
+
+Send a full sticker pack. Supports buffers, file paths, and URLs. Packs over 60 stickers are automatically batched with a 2-second delay between batches.
+
+```javascript
+// Method 1 — via sendMessage
+await sock.sendMessage(jid, {
+  stickerPack: {
+    name: 'My Stickers',
+    publisher: 'NexusTechPro',
+    description: 'Custom sticker collection',
+    stickers: [
+      { data: buffer, emojis: ['😊'] },
+      { data: './sticker.png', emojis: ['😂'] },
+      { data: './sticker.webp', emojis: ['🎉'] },
+      { data: 'https://example.com/sticker.jpg', emojis: ['❤️'] }
     ],
-    headerType: 3
-})
+    cover: coverBuffer  // optional cover image
+  }
+}, { quoted: message })
+
+// Method 2 — dedicated shorthand
+await sock.stickerPackMessage(jid, {
+  name: 'My Stickers',
+  publisher: 'NexusTechPro',
+  description: 'A collection',
+  stickers: [
+    { data: buffer, emojis: ['😊'] },
+    { data: './sticker.png', emojis: ['😂'] }
+  ],
+  cover: coverBuffer
+}, { quoted: message })
 ```
+
+**Supported formats:**
+
+| Format | Support | Notes |
+|--------|---------|-------|
+| WebP | ✅ Full | Used as-is |
+| PNG | ✅ Full | Auto-converted to WebP |
+| JPG/JPEG | ✅ Full | Auto-converted to WebP |
+| GIF | ✅ Limited | Converts to static WebP |
+| BMP | ✅ Full | Auto-converted to WebP |
+| Video | ❌ | Not supported |
+
+**Key behaviours:**
+- Packs >60 stickers are auto-batched
+- Stickers >1MB are auto-compressed
+- Invalid stickers are gracefully skipped
+- 2-second delay between batches to avoid rate limiting
 
 ---
 
-### Advanced: Native Flow Messages
+### Shorthand Wrappers
 
-Complete example with all features:
 ```javascript
-await sock.sendMessage(jid, {
-    interactiveMessage: {
-        title: "Interactive Message",
-        footer: "© NexusTechPro",
-        image: { url: "https://example.com/image.jpg" },
-        nativeFlowMessage: {
-            messageParamsJson: JSON.stringify({
-                limited_time_offer: {
-                    text: "Limited offer!",
-                    url: "https://nexustechpro.com",
-                    copy_code: "NEXUS2025",
-                    expiration_time: Date.now() + (24 * 60 * 60 * 1000)
-                },
-                bottom_sheet: {
-                    in_thread_buttons_limit: 2,
-                    divider_indices: [0, 1, 2],
-                    list_title: "Select Option",
-                    button_title: "Click Here"
-                },
-                tap_target_configuration: {
-                    title: "Tap Target",
-                    description: "Description",
-                    canonical_url: "https://nexustechpro.com",
-                    domain: "nexustechpro.com",
-                    button_index: 0
-                }
-            }),
-            buttons: [
-                {
-                    name: "single_select",
-                    buttonParamsJson: JSON.stringify({
-                        title: "Select",
-                        sections: [{
-                            title: "Options",
-                            rows: [
-                                { title: "Option 1", description: "Desc 1", id: "opt1" }
-                            ]
-                        }]
-                    })
-                },
-                {
-                    name: "cta_copy",
-                    buttonParamsJson: JSON.stringify({
-                        display_text: "Copy Code",
-                        copy_code: "PROMO2025"
-                    })
-                }
-            ]
-        }
-    }
-})
-```
-
----
-
-### Interactive Buttons (Alternative Format)
-```javascript
-// Example non header media
-await sock.sendMessage(jid, {
-    text: "Description of Message",
-    title: "Title of Message",
-    subtitle: "Subtitle Message",
-    footer: "Footer Message",
-    interactiveButtons: [
-        {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Quick Reply",
-                id: "button_1"
-            })
-        },
-        {
-            name: "cta_url",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Visit Website",
-                url: "https://nexustechpro.com"
-            })
-        }
-    ]
-}, { quoted: message })
-
-// Example with media
-await sock.sendMessage(jid, {
-    image: { url: "https://example.jpg" }, // or buffer
-    caption: "Description of Message",
-    title: "Title of Message",
-    subtitle: "Subtitle Message",
-    footer: "Footer Message",
-    media: true,
-    interactiveButtons: [
-        {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Quick Reply",
-                id: "button_1"
-            })
-        },
-        {
-            name: "cta_url",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Visit Website",
-                url: "https://nexustechpro.com"
-            })
-        }
-    ]
-}, { quoted: message })
-
-// Example with header product
-await sock.sendMessage(jid, {
-    product: {
-        productImage: { url: "https://example.jpg" }, // or buffer
-        productImageCount: 1,
-        title: "Product Title",
-        description: "Product Description",
-        priceAmount1000: 20000 * 1000,
-        currencyCode: "USD",
-        retailerId: "Retail",
-        url: "https://example.com",            
-    },
-    businessOwnerJid: "1234@s.whatsapp.net",
-    caption: "Description of Message",
-    title: "Title of Message",
-    footer: "Footer Message",
-    media: true,
-    interactiveButtons: [
-        {
-            name: "quick_reply",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Quick Reply",
-                id: "button_1"
-            })
-        },
-        {
-            name: "cta_url",
-            buttonParamsJson: JSON.stringify({
-                display_text: "Visit Website",
-                url: "https://nexustechpro.com"
-            })
-        }
-    ]
-}, { quoted: message })
+await sock.sendText(jid, 'Hello!', options)
+await sock.sendImage(jid, { url: './image.jpg' }, 'Caption', options)
+await sock.sendVideo(jid, buffer, 'Caption', options)
+await sock.sendDocument(jid, { url: './file.pdf' }, 'Caption', options)
+await sock.sendAudio(jid, { url: './audio.mp3' }, options)
+await sock.sendLocation(jid, { degreesLatitude: 24.12, degreesLongitude: 55.11, name: 'Place' }, options)
+await sock.sendPoll(jid, 'Question?', ['A', 'B', 'C'], false, options)
+await sock.sendReaction(jid, message.key, '💖', options)
+await sock.sendSticker(jid, { url: './sticker.webp' }, options)
+await sock.sendContact(jid, { vcard }, options)
+await sock.sendForward(jid, message, { force: true })
 ```
 
 ---
 
 ## ✏️ Message Modifications
 
-### Delete Message (for everyone)
 ```javascript
-const msg = await sock.sendMessage(jid, { text: 'hello' })
-await sock.sendMessage(jid, { delete: msg.key })
-```
+// Edit
+await sock.sendMessage(jid, { text: 'Updated text', edit: originalMessage.key })
 
-### Edit Message
-```javascript
-await sock.sendMessage(jid, {
-    text: 'Updated message text',
-    edit: originalMessage.key
-})
+// Delete for everyone
+const sent = await sock.sendMessage(jid, { text: 'hello' })
+await sock.sendMessage(jid, { delete: sent.key })
+
+// Pin (time in seconds: 86400=24h, 604800=7d, 2592000=30d)
+await sock.sendMessage(jid, { pin: { type: 1, time: 86400, key: message.key } })
+
+// Unpin
+await sock.sendMessage(jid, { pin: { type: 0, time: 0, key: message.key } })
 ```
 
 ---
 
-## 📥 Media Operations
+## 📥 Media Download
 
-### Download Media
 ```javascript
 import { downloadMediaMessage, getContentType } from '@nexustechpro/baileys'
 
 sock.ev.on('messages.upsert', async ({ messages }) => {
-    const msg = messages[0]
-    if(!msg.message) return
-    
-    const messageType = getContentType(msg.message)
-    
-    if(messageType === 'imageMessage') {
-        const buffer = await downloadMediaMessage(
-            msg,
-            'buffer',
-            {},
-            {
-                logger: console,
-                reuploadRequest: sock.updateMediaMessage
-            }
-        )
-        // Save buffer to file
-        fs.writeFileSync('./download.jpeg', buffer)
-    }
-})
-```
+  const msg = messages[0]
+  if (!msg.message) return
 
-### Re-upload Media
-```javascript
+  const type = getContentType(msg.message)
+
+  if (type === 'imageMessage') {
+    const buffer = await downloadMediaMessage(
+      msg,
+      'buffer',
+      {},
+      { logger, reuploadRequest: sock.updateMediaMessage }
+    )
+    fs.writeFileSync('./downloaded.jpg', buffer)
+  }
+})
+
+// Re-upload expired media
 await sock.updateMediaMessage(msg)
 ```
 
@@ -1214,572 +1094,291 @@ await sock.updateMediaMessage(msg)
 
 ## 👥 Group Management
 
-### Create Group
 ```javascript
-const group = await sock.groupCreate('Group Name', [
-    '1234567890@s.whatsapp.net',
-    '0987654321@s.whatsapp.net'
-])
-console.log('Group created:', group.id)
-```
+// Create group
+const group = await sock.groupCreate('Group Name', ['1234567890@s.whatsapp.net'])
 
-### Add/Remove Participants
-```javascript
-// Add
+// Add / Remove / Promote / Demote
 await sock.groupParticipantsUpdate(groupJid, ['1234567890@s.whatsapp.net'], 'add')
-
-// Remove
 await sock.groupParticipantsUpdate(groupJid, ['1234567890@s.whatsapp.net'], 'remove')
-
-// Promote to admin
 await sock.groupParticipantsUpdate(groupJid, ['1234567890@s.whatsapp.net'], 'promote')
-
-// Demote from admin
 await sock.groupParticipantsUpdate(groupJid, ['1234567890@s.whatsapp.net'], 'demote')
-```
 
-### Update Group Subject
-```javascript
+// Update group info
 await sock.groupUpdateSubject(groupJid, 'New Group Name')
-```
+await sock.groupUpdateDescription(groupJid, 'New description')
 
-### Update Group Description
-```javascript
-await sock.groupUpdateDescription(groupJid, 'New group description')
-```
+// Settings
+await sock.groupSettingUpdate(groupJid, 'announcement')     // only admins can send
+await sock.groupSettingUpdate(groupJid, 'not_announcement') // everyone can send
+await sock.groupSettingUpdate(groupJid, 'locked')           // only admins edit info
+await sock.groupSettingUpdate(groupJid, 'unlocked')         // everyone edits info
 
-### Group Settings
-```javascript
-// Only admins can send messages
-await sock.groupSettingUpdate(groupJid, 'announcement')
-
-// Everyone can send messages
-await sock.groupSettingUpdate(groupJid, 'not_announcement')
-
-// Only admins can edit group info
-await sock.groupSettingUpdate(groupJid, 'locked')
-
-// Everyone can edit group info
-await sock.groupSettingUpdate(groupJid, 'unlocked')
-```
-
-### Get Group Metadata
-```javascript
+// Metadata
 const metadata = await sock.groupMetadata(groupJid)
-console.log('Group:', metadata.subject)
-console.log('Participants:', metadata.participants.length)
-```
 
-### Get Invite Code
-```javascript
+// Invite link
 const code = await sock.groupInviteCode(groupJid)
-console.log('Invite link:', `https://chat.whatsapp.com/${code}`)
-```
+console.log(`https://chat.whatsapp.com/${code}`)
 
-### Revoke Invite Code
-```javascript
-const newCode = await sock.groupRevokeInvite(groupJid)
-console.log('New invite code:', newCode)
-```
-
-### Join Group via Invite Code
-```javascript
-await sock.groupAcceptInvite('INVITE_CODE_HERE')
-```
-
-### Leave Group
-```javascript
-await sock.groupLeave(groupJid)
-```
-
-### Get Group Invite Info
-```javascript
-const info = await sock.groupGetInviteInfo('INVITE_CODE')
-console.log('Group info:', info)
+await sock.groupRevokeInvite(groupJid)        // revoke invite
+await sock.groupAcceptInvite('INVITE_CODE')   // join group
+await sock.groupLeave(groupJid)               // leave group
 ```
 
 ---
 
 ## 📱 User Operations
 
-### Check if Number Exists
 ```javascript
+// Check if number exists on WhatsApp
 const [result] = await sock.onWhatsApp('1234567890')
-if(result?.exists) {
-    console.log('Number exists:', result.jid)
-}
-```
+if (result?.exists) console.log(result.jid)
 
-### Get Profile Picture
-```javascript
-// Low resolution
-const ppUrl = await sock.profilePictureUrl(jid)
-
-// High resolution
-const ppUrlHD = await sock.profilePictureUrl(jid, 'image')
-```
-
-### Update Profile Picture
-```javascript
-await sock.updateProfilePicture(jid, {
-    url: './profile.jpg'
-})
-```
-
-### Remove Profile Picture
-```javascript
+// Profile picture
+const url = await sock.profilePictureUrl(jid, 'image') // 'image' = HD
+await sock.updateProfilePicture(jid, { url: './profile.jpg' })
 await sock.removeProfilePicture(jid)
-```
 
-### Get Status
-```javascript
+// Status & name
 const status = await sock.fetchStatus(jid)
-console.log('Status:', status)
-```
-
-### Update Profile Status
-```javascript
 await sock.updateProfileStatus('Available 24/7')
-```
+await sock.updateProfileName('My Bot')
 
-### Update Profile Name
-```javascript
-await sock.updateProfileName('NexusTech Bot')
-```
+// Business profile
+const biz = await sock.getBusinessProfile(jid)
 
-### Get Business Profile
-```javascript
-const profile = await sock.getBusinessProfile(jid)
-console.log('Business:', profile.description)
-```
-
-### Presence Updates
-```javascript
-// Subscribe to presence updates
+// Presence
 await sock.presenceSubscribe(jid)
+await sock.sendPresenceUpdate('composing', jid) // available | unavailable | composing | recording | paused
 
-// Send presence
-await sock.sendPresenceUpdate('available', jid) // available, unavailable, composing, recording, paused
-```
-
-### Read Messages
-```javascript
+// Read messages
 await sock.readMessages([message.key])
+
+// Block / Unblock
+await sock.updateBlockStatus(jid, 'block')
+await sock.updateBlockStatus(jid, 'unblock')
+
+// Blocklist
+const blocked = await sock.fetchBlocklist()
 ```
 
 ---
 
 ## 🔒 Privacy Controls
 
-### Block/Unblock User
-```javascript
-// Block
-await sock.updateBlockStatus(jid, 'block')
-
-// Unblock
-await sock.updateBlockStatus(jid, 'unblock')
-```
-
-### Get Privacy Settings
 ```javascript
 const settings = await sock.fetchPrivacySettings()
-console.log(settings)
-```
 
-### Update Privacy Settings
-```javascript
-// Last seen: 'all', 'contacts', 'contact_blacklist', 'none'
+// last seen: 'all' | 'contacts' | 'contact_blacklist' | 'none'
 await sock.updateLastSeenPrivacy('contacts')
 
-// Online: 'all', 'match_last_seen'
+// online: 'all' | 'match_last_seen'
 await sock.updateOnlinePrivacy('all')
 
-// Profile picture: 'all', 'contacts', 'contact_blacklist', 'none'
+// profile picture: 'all' | 'contacts' | 'contact_blacklist' | 'none'
 await sock.updateProfilePicturePrivacy('contacts')
 
-// Status: 'all', 'contacts', 'contact_blacklist', 'none'
+// status: 'all' | 'contacts' | 'contact_blacklist' | 'none'
 await sock.updateStatusPrivacy('contacts')
 
-// Read receipts: 'all', 'none'
+// read receipts: 'all' | 'none'
 await sock.updateReadReceiptsPrivacy('all')
 
-// Groups add: 'all', 'contacts', 'contact_blacklist'
+// groups add: 'all' | 'contacts' | 'contact_blacklist'
 await sock.updateGroupsAddPrivacy('contacts')
-```
-
-### Get Block List
-```javascript
-const blocklist = await sock.fetchBlocklist()
-console.log('Blocked users:', blocklist)
 ```
 
 ---
 
 ## 💬 Chat Operations
 
-### Archive/Unarchive Chat
 ```javascript
-const lastMsg = await getLastMessageInChat(jid)
+const lastMsg = await getLastMessageInChat(jid) // implement with your store
 
-await sock.chatModify({
-    archive: true,
-    lastMessages: [lastMsg]
-}, jid)
-```
+// Archive / Unarchive
+await sock.chatModify({ archive: true, lastMessages: [lastMsg] }, jid)
 
-### Mute/Unmute Chat
-```javascript
-// Mute for 8 hours
-await sock.chatModify({
-    mute: 8 * 60 * 60 * 1000
-}, jid)
+// Mute (ms) / Unmute
+await sock.chatModify({ mute: 8 * 60 * 60 * 1000 }, jid)
+await sock.chatModify({ mute: null }, jid)
 
-// Unmute
-await sock.chatModify({
-    mute: null
-}, jid)
-```
-
-### Pin/Unpin Chat
-```javascript
-// Pin
+// Pin / Unpin
 await sock.chatModify({ pin: true }, jid)
-
-// Unpin
 await sock.chatModify({ pin: false }, jid)
-```
 
-### Delete Chat
-```javascript
-const lastMsg = await getLastMessageInChat(jid)
+// Delete chat
+await sock.chatModify({ delete: true, lastMessages: [{ key: lastMsg.key, messageTimestamp: lastMsg.messageTimestamp }] }, jid)
 
-await sock.chatModify({
-    delete: true,
-    lastMessages: [{
-        key: lastMsg.key,
-        messageTimestamp: lastMsg.messageTimestamp
-    }]
-}, jid)
-```
-
-### Mark Chat as Read/Unread
-```javascript
-// Mark as read
+// Mark read / unread
 await sock.chatModify({ markRead: true }, jid)
-
-// Mark as unread
 await sock.chatModify({ markRead: false }, jid)
 ```
 
 ---
 
-## 📢 Broadcast & Stories
+## 📢 Newsletter / Channels
 
-### Send Broadcast Message
 ```javascript
-await sock.sendMessage(jid, {
-    text: 'Broadcast message',
-    statusJidList: [
-        '1234567890@s.whatsapp.net',
-        '0987654321@s.whatsapp.net'
-    ],
-    broadcast: true
-})
-```
+// Create
+await sock.newsletterCreate('Channel Name', { description: 'Description', picture: buffer })
 
-### Send Story/Status
-```javascript
-await sock.sendMessage('status@broadcast', {
-    image: { url: './story.jpg' },
-    caption: 'My story update!'
-})
-```
-
-### Send Group Story
-You can post stories that are visible to specific groups using `sendGroupStatusMessage`:
-```javascript
-await sock.sendGroupStatusMessage(groupJid, {
-    text: 'Hello group!', // Or image, video, etc.
-})
-```
-
-### Newsletter/Channel Management
-```javascript
-// Create newsletter
-await sock.newsletterCreate('Newsletter Name', {
-    description: 'Newsletter description',
-    picture: buffer // optional
-})
-
-// Update newsletter metadata
-await sock.newsletterUpdateMetadata(newsletterJid, {
-    name: 'New Name',
-    description: 'New description'
-})
-
-// Update newsletter picture
+// Update
+await sock.newsletterUpdateMetadata(newsletterJid, { name: 'New Name', description: 'New Desc' })
 await sock.newsletterUpdatePicture(newsletterJid, buffer)
 
-// React to newsletter message
+// React to a message
 await sock.newsletterReactMessage(newsletterJid, messageId, '👍')
 
-// Follow newsletter
+// Follow / Unfollow / Mute / Unmute
 await sock.newsletterFollow(newsletterJid)
-
-// Unfollow newsletter
 await sock.newsletterUnfollow(newsletterJid)
-
-// Mute newsletter
 await sock.newsletterMute(newsletterJid)
-
-// Unmute newsletter
 await sock.newsletterUnmute(newsletterJid)
 ```
 
 ---
 
-## 🧩 Advanced Features
+## 📡 Events Reference
 
-### Disappearing Messages
-```javascript
-// Enable (86400 = 24 hours, 604800 = 7 days, 7776000 = 90 days)
-await sock.sendMessage(jid, {
-    disappearingMessagesInChat: 86400
-})
-
-// Disable
-await sock.sendMessage(jid, {
-    disappearingMessagesInChat: false
-})
-```
-
-### Query Message
-```javascript
-const msg = await sock.loadMessage(jid, messageId)
-console.log('Message:', msg)
-```
-
-### Get Message Info
-```javascript
-const info = await sock.messageInfo(jid, messageId)
-console.log('Read by:', info.readBy.length)
-console.log('Played by:', info.playedBy.length)
-```
-
-### App State Sync
-```javascript
-// Sync app state
-await sock.appPatch(['regular', 'critical_block', 'critical_unblock_low'])
-```
-
-### WABrowserId
-```javascript
-const browserId = sock.generateBrowserId()
-console.log('Browser ID:', browserId)
-```
+| Event | Trigger |
+|-------|---------|
+| `connection.update` | Connection state changed |
+| `creds.update` | Auth credentials updated |
+| `messages.upsert` | New message(s) received |
+| `messages.update` | Message status/content updated |
+| `messages.delete` | Message(s) deleted |
+| `message-receipt.update` | Read/delivered receipts |
+| `chats.set` | Initial chat list loaded |
+| `chats.upsert` | New chat(s) appeared |
+| `chats.update` | Chat metadata updated |
+| `chats.delete` | Chat(s) deleted |
+| `contacts.set` | Initial contacts loaded |
+| `contacts.upsert` | New contact(s) added |
+| `contacts.update` | Contact info updated |
+| `groups.upsert` | New group created/joined |
+| `groups.update` | Group metadata changed |
+| `group-participants.update` | Member added/removed/promoted |
+| `presence.update` | User presence changed |
+| `call` | Incoming call |
+| `blocklist.set` | Initial blocklist loaded |
+| `blocklist.update` | Block/unblock event |
 
 ---
 
 ## 🎯 Best Practices
 
-### 1. Session Management
+### Reconnection
+
 ```javascript
-import { useMultiFileAuthState } from '@nexustechpro/baileys'
-
-const { state, saveCreds } = await useMultiFileAuthState('auth_folder')
-const sock = makeWASocket({ auth: state })
-
-sock.ev.on('creds.update', saveCreds)
-```
-
-### 2. Store Implementation
-```javascript
-import { makeInMemoryStore } from '@nexustechpro/baileys'
-
-const store = makeInMemoryStore({})
-store.readFromFile('./store.json')
-
-setInterval(() => {
-    store.writeToFile('./store.json')
-}, 10_000)
-
-store.bind(sock.ev)
-```
-
-### 3. Error Handling
-```javascript
-try {
-    await sock.sendMessage(jid, { text: 'Hello' })
-} catch(error) {
-    if(error.output?.statusCode === 401) {
-        console.log('Not authorized')
-    } else {
-        console.error('Send failed:', error)
-    }
-}
-```
-
-### 4. Reconnection Logic
-```javascript
-sock.ev.on('connection.update', async (update) => {
-    const { connection, lastDisconnect } = update
-    
-    if(connection === 'close') {
-        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut
-        
-        if(shouldReconnect) {
-            console.log('Reconnecting...')
-            await connectToWhatsApp()
-        } else {
-            console.log('Logged out')
-        }
-    }
+sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
+  if (connection === 'close') {
+    const code = lastDisconnect?.error?.output?.statusCode
+    const shouldReconnect = code !== DisconnectReason.loggedOut
+    if (shouldReconnect) connectToWhatsApp()
+    else console.log('Logged out — clear session and re-authenticate')
+  }
 })
 ```
 
-### 5. Rate Limiting
+### Cache Group Metadata
+
+```javascript
+import NodeCache from '@cacheable/node-cache'
+
+const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false })
+
+const sock = makeWASocket({
+  cachedGroupMetadata: async (jid) => groupCache.get(jid)
+})
+
+sock.ev.on('groups.update', async ([event]) => {
+  const metadata = await sock.groupMetadata(event.id)
+  groupCache.set(event.id, metadata)
+})
+```
+
+### Rate Limiting
+
 ```javascript
 const queue = []
-const sending = false
+let sending = false
 
-async function queueMessage(jid, message) {
-    queue.push({ jid, message })
-    if(!sending) processQueue()
+const queueMessage = (jid, content) => {
+  queue.push({ jid, content })
+  if (!sending) processQueue()
 }
 
-async function processQueue() {
-    sending = true
-    while(queue.length > 0) {
-        const { jid, message } = queue.shift()
-        await sock.sendMessage(jid, message)
-        await delay(1000) // 1 second delay between messages
-    }
-    sending = false
+const processQueue = async () => {
+  sending = true
+  while (queue.length > 0) {
+    const { jid, content } = queue.shift()
+    await sock.sendMessage(jid, content)
+    await new Promise(r => setTimeout(r, 1000))
+  }
+  sending = false
 }
 ```
 
----
+### Error Handling
 
-## 📝 Important Notes
-
-### WhatsApp ID Formats
-- **Personal**: `[country_code][phone_number]@s.whatsapp.net`
-- **Group**: `[group_id]@g.us`
-- **Broadcast**: `[timestamp]@broadcast`
-- **Status**: `status@broadcast`
-- **Newsletter**: `[newsletter_id]@newsletter`
-
-### Message Types
-All supported message types:
-- `conversation` - Text
-- `imageMessage` - Image
-- `videoMessage` - Video
-- `audioMessage` - Audio
-- `documentMessage` - Document
-- `stickerMessage` - Sticker
-- `locationMessage` - Location
-- `contactMessage` - Contact
-- `pollCreationMessage` - Poll
-- `reactionMessage` - Reaction
-- `editedMessage` - Edited message
-- `viewOnceMessage` - View once media
-- `extendedTextMessage` - Text with link preview
-
-### Events Reference
 ```javascript
-// Connection events
-'connection.update'
-'creds.update'
-
-// Message events
-'messages.upsert'
-'messages.update'
-'messages.delete'
-'message-receipt.update'
-
-// Chat events
-'chats.set'
-'chats.upsert'
-'chats.update'
-'chats.delete'
-
-// Contact events
-'contacts.set'
-'contacts.upsert'
-'contacts.update'
-
-// Group events
-'groups.upsert'
-'groups.update'
-'group-participants.update'
-
-// Presence events
-'presence.update'
-
-// Call events
-'call'
-
-// Blocklist events
-'blocklist.set'
-'blocklist.update'
+try {
+  await sock.sendMessage(jid, { text: 'Hello' })
+} catch (error) {
+  if (error.output?.statusCode === 401) console.log('Unauthorized')
+  else console.error('Send failed:', error)
+}
 ```
 
----
+### Poll Decryption
 
-## 🤝 Contributing
+```javascript
+import { getAggregateVotesInPollMessage } from '@nexustechpro/baileys'
 
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+sock.ev.on('messages.update', async (event) => {
+  for (const { key, update } of event) {
+    if (update.pollUpdates) {
+      const pollCreation = await getMessage(key)
+      if (pollCreation) {
+        const result = getAggregateVotesInPollMessage({
+          message: pollCreation,
+          pollUpdates: update.pollUpdates
+        })
+        console.log('Poll votes:', result)
+      }
+    }
+  }
+})
+```
 
 ---
 
 ## ⚠️ Disclaimer
 
-This project is **NOT** officially affiliated with WhatsApp or Meta. This is an independent project and should be used responsibly. The authors and maintainers are not responsible for any misuse of this library.
+This project is **not** affiliated with WhatsApp or Meta. Use responsibly:
 
-**Important**: 
 - Follow WhatsApp's Terms of Service
-- Don't spam or send unsolicited messages
+- Do not spam or send unsolicited messages
 - Respect user privacy
-- Use for legitimate purposes only
 - Be aware of WhatsApp's rate limits
+- This library is for legitimate automation purposes only
 
 ---
 
 ## 🙏 Acknowledgments
 
-Special thanks to:
 - [WhiskeySockets](https://github.com/WhiskeySockets) for the original Baileys library
-- All contributors who have helped improve this project
-- The open-source community for their continuous support
-
----
-
-## 📞 Support
-
-- **Issues**: [Whatsapp Channel](https://whatsapp.com/channel/0029VbBK53XBvvslYeZlBe0V)
-- **Discussions**: [Whatsapp Channel](https://whatsapp.com/channel/0029VbBK53XBvvslYeZlBe0V)
-- **NPM**: [@nexustechpro/baileys](https://www.npmjs.com/package/@nexustechpro/baileys)
+- All contributors and the open-source community
 
 ---
 
 <div align="center">
-  
-  **Made with ❤️ by [NexusTechPro](https://github.com/nexustechpro2)**
-  
-  ⭐ **Star us on GitHub!** ⭐
-  
-  [GitHub](https://github.com/nexustechpro2/baileys) • [NPM](https://www.npmjs.com/package/@nexustechpro/baileys) • [Documentation](https://github.com/nexustechpro2/baileys/wiki)
+
+**Made with ❤️ by [NexusTechPro](https://github.com/nexustechpro2)**
+
+⭐ **Star us on GitHub!** ⭐
+
+[GitHub](https://github.com/nexustechpro2/baileys) • [NPM](https://www.npmjs.com/package/@nexustechpro/baileys)
 
 </div>
