@@ -107,6 +107,7 @@
     "jimp": "^1.6.0",
     "jiti": "^2.4.2",
     "json": "^11.0.0",
+    "link-preview-js": "latest",
     "lru-cache": "^11.1.0",
     "open": "^8.4.2",
     "pino-pretty": "^13.1.1",
@@ -130,9 +131,6 @@
       "optional": true
     },
     "jimp": {
-      "optional": true
-    },
-    "link-preview-js": {
       "optional": true
     }
   },
