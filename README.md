@@ -551,7 +551,6 @@ await sock.sendMessage(jid, { text: 'Replying to your status!' }, {
 | `id` | Any unique string — `'FAKE_' + Date.now()` avoids collisions |
 | `participant` | Required in groups/status — the person who appears to have sent it |
 
-
 ---
 
 ### Buttons & Interactive Messages
@@ -888,25 +887,30 @@ await sock.sendMessage(jid, {
 
 Post a story/status visible only to a specific group.
 
+> All media types accept a URL, Buffer, file path, or WhatsApp CDN URL — no manual download needed.
+
 ```javascript
-// Via sendMessage
-await sock.sendMessage(jid, {
-  groupStatus: {
-    text: 'Hello group!'
-    // or: image: { url: '...' }, video: { url: '...' }, audio: { url: '...' }
-  }
-})
+// Text
+await sock.sendMessage(jid, { groupStatus: { text: 'Hello group!' } })
 
-// Via dedicated shorthand
-await sock.sendGroupStatusMessage(groupJid, {
-  text: 'Hello group!'
-})
+// Image
+await sock.sendMessage(jid, { groupStatus: { image: { url: 'https://example.com/image.jpg' }, caption: 'Caption' } })
 
-// With media
-await sock.sendGroupStatusMessage(groupJid, {
-  image: { url: 'https://example.com/image.jpg' },
-  caption: 'Group story caption'
-})
+// Video
+await sock.sendMessage(jid, { groupStatus: { video: { url: 'https://example.com/video.mp4' }, caption: 'Caption' } })
+
+// Audio
+await sock.sendMessage(jid, { groupStatus: { audio: { url: 'https://example.com/audio.mp3' }, ptt: false } })
+
+// Via shorthand
+await sock.sendGroupStatusMessage(groupJid, { text: 'Hello group!' })
+await sock.sendGroupStatusMessage(groupJid, { image: { url: 'https://example.com/image.jpg' }, caption: 'Caption' })
+await sock.sendGroupStatusMessage(groupJid, { video: { url: 'https://example.com/video.mp4' }, caption: 'Caption' })
+await sock.sendGroupStatusMessage(groupJid, { audio: { url: 'https://example.com/audio.mp3' }, ptt: false })
+
+// Media also accepts Buffer or file path
+await sock.sendGroupStatusMessage(groupJid, { image: buffer })
+await sock.sendGroupStatusMessage(groupJid, { image: fs.readFileSync('./image.jpg') })
 ```
 
 #### Personal Status / Story (status@broadcast)
@@ -914,22 +918,17 @@ await sock.sendGroupStatusMessage(groupJid, {
 Post a story visible to all your contacts or a specific list.
 
 ```javascript
-// Text story
-await sock.sendMessage('status@broadcast', {
-  text: 'My status update!'
-})
+// Text
+await sock.sendMessage('status@broadcast', { text: 'My status update!' })
 
-// Image story
-await sock.sendMessage('status@broadcast', {
-  image: { url: 'https://example.com/image.jpg' },
-  caption: 'Caption here'
-})
+// Image
+await sock.sendMessage('status@broadcast', { image: { url: 'https://example.com/image.jpg' }, caption: 'Caption' })
 
-// Video story
-await sock.sendMessage('status@broadcast', {
-  video: { url: './video.mp4' },
-  caption: 'Video story'
-})
+// Video
+await sock.sendMessage('status@broadcast', { video: { url: 'https://example.com/video.mp4' }, caption: 'Caption' })
+
+// Audio
+await sock.sendMessage('status@broadcast', { audio: { url: 'https://example.com/audio.mp3' }, ptt: false })
 
 // Send to specific contacts only
 await sock.sendMessage('status@broadcast', {
@@ -946,32 +945,20 @@ await sock.sendMessage('status@broadcast', {
 Mention specific users or groups in a story. They get a private notification.
 
 ```javascript
-// Text status with mention
-await sock.sendStatusMentions(groupJid,
-  { text: 'Hey @someone check this out!' },
-  ['1234567890@s.whatsapp.net']
-)
+// Text
+await sock.sendStatusMentions({ text: 'Hey @someone check this out!' }, ['1234567890@s.whatsapp.net'])
 
-// Image status with mention
-await sock.sendStatusMentions(groupJid,
-  {
-    image: { url: 'https://example.com/image.jpg' },
-    caption: 'Caption'
-  },
-  ['1234567890@s.whatsapp.net', '123456789123456789@g.us']
-)
+// Image
+await sock.sendStatusMentions({ image: { url: 'https://example.com/image.jpg' }, caption: 'Caption' }, ['1234567890@s.whatsapp.net'])
 
-// Video status with mention
-await sock.sendStatusMentions(groupJid,
-  { video: { url: './video.mp4' } },
-  ['1234567890@s.whatsapp.net']
-)
+// Video
+await sock.sendStatusMentions({ video: { url: 'https://example.com/video.mp4' } }, ['1234567890@s.whatsapp.net'])
 
-// Audio status with mention
-await sock.sendStatusMentions(groupJid,
-  { audio: { url: './audio.mp3' }, ptt: true },
-  ['1234567890@s.whatsapp.net']
-)
+// Audio
+await sock.sendStatusMentions({ audio: { url: 'https://example.com/audio.mp3' }, ptt: true }, ['1234567890@s.whatsapp.net'])
+
+// Tag a group (all members get notified)
+await sock.sendStatusMentions({ text: 'Hey group!' }, ['123456789@g.us'])
 ```
 
 #### Sticker Pack
