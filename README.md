@@ -1191,7 +1191,7 @@ await sock.stickerPackMessage(jid, {
 
 **Key behaviours:**
 - Packs >60 stickers are auto-batched with a 2-second delay between batches
-- All format conversion and EXIF metadata embedding handled automatically by `wa-sticker-formatter`
+- Animated stickers (WebM/MP4) are converted directly via ffmpeg for best quality; static formats go through wa-sticker-formatter. EXIF metadata is embedded automatically for all formats.
 - Invalid or unprocessable stickers are gracefully skipped
 - Cover defaults to the first sticker if not provided
 
