@@ -123,6 +123,7 @@
     "lru-cache": "^11.1.0",
     "music-metadata": "^11.7.0",
     "node-cache": "^5.1.2",
+    "p-limit": "^7.3.0",
     "p-queue": "^9.0.0",
     "pino": "^9.6",
     "prismjs": "^1.30.0",
