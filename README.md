@@ -72,7 +72,9 @@
 - [Message Modifications](#️-message-modifications)
 - [Media Download](#-media-download)
 - [Group Management](#-group-management)
+  - [AI Groups](#ai-groups)
 - [User Operations](#-user-operations)
+  - [Usernames](#usernames)
 - [Check Number Status](#ban-checker)
 - [Privacy Controls](#-privacy-controls)
 - [Chat Operations](#-chat-operations)
@@ -1292,7 +1294,7 @@ await sock.sendTableV2(
 await sock.sendList(
   jid,
   'Bot Info',
-  [['Name', 'NexusBot'], ['Version', '2.1.3'], ['Developer', 'THE_TECH_PRO']],
+  [['Name', 'NexusTechPro'], ['Version', '2.1.3'], ['Developer', 'NexusTechPro']],
   quoted,
   { footer: '© NexusTechPro' }
 )
@@ -1619,6 +1621,45 @@ await sock.groupAcceptInvite('INVITE_CODE')   // join group
 await sock.groupLeave(groupJid)               // leave group
 ```
 
+### AI Groups
+
+WhatsApp AI Groups are a special group type with Meta AI built-in as a participant.
+
+```javascript
+// Create an AI group
+const group = await sock.aiGroupCreate('AI Study Group', ['1234567890@s.whatsapp.net'])
+
+// Get AI group metadata
+const metadata = await sock.aiGroupMetadata(groupJid)
+
+// Add the Meta AI bot to an existing AI group
+await sock.aiGroupAddBot(groupJid)
+
+// Add / Remove / Promote / Demote participants
+await sock.aiGroupParticipantsUpdate(groupJid, ['1234567890@s.whatsapp.net'], 'add')
+await sock.aiGroupParticipantsUpdate(groupJid, ['1234567890@s.whatsapp.net'], 'remove')
+await sock.aiGroupParticipantsUpdate(groupJid, ['1234567890@s.whatsapp.net'], 'promote')
+await sock.aiGroupParticipantsUpdate(groupJid, ['1234567890@s.whatsapp.net'], 'demote')
+
+// Update subject
+await sock.aiGroupUpdateSubject(groupJid, 'New AI Group Name')
+
+// Invite link
+const code = await sock.aiGroupInviteCode(groupJid)
+await sock.aiGroupRevokeInvite(groupJid)
+await sock.aiGroupAcceptInvite('INVITE_CODE')
+
+// Leave
+await sock.aiGroupLeave(groupJid)
+
+// Settings (announcement, not_announcement, locked, unlocked)
+await sock.aiGroupSettingUpdate(groupJid, 'announcement')
+
+// Ephemeral messages
+await sock.aiGroupToggleEphemeral(groupJid, 86400) // 24h
+await sock.aiGroupToggleEphemeral(groupJid, 0)     // disable
+```
+
 ---
 
 ## 📱 User Operations
@@ -1654,6 +1695,49 @@ await sock.updateBlockStatus(jid, 'unblock')
 
 // Blocklist
 const blocked = await sock.fetchBlocklist()
+```
+
+### Usernames
+
+```javascript
+// Check if a username is available
+const result = await sock.checkUsername('nexustechpro')
+// { available: true, username: 'nexustechpro', session_id: '...' }
+// { available: false, suggestions: ['nexustechpro1', 'nexustechpro_'], ... }
+
+// Check multiple usernames at once
+const results = await sock.checkUsernameMulti(['nexustechpro', 'nexustechpro'])
+
+// Set your username
+await sock.setUsername('nexustechpro')
+
+// Set with options
+await sock.setUsername('nexustechpro', { pin: '1234' })
+
+// Check availability then set in one call
+await sock.checkAndSetUsername('nexustechpro')
+
+// Get your current username
+const username = await sock.getMyUsername()
+
+// Delete your username
+await sock.deleteUsername()
+
+// Set a PIN on your username
+await sock.setUsernamePin('1234')
+
+// Find a user by their @username
+const user = await sock.findUserByUsername('nexustechpro')
+// { jid: '1234567890@s.whatsapp.net', contact: true }
+
+// Find a user with PIN-protected username
+const user = await sock.findUserByUsername('nexustechpro', '1234')
+
+// Fetch usernames of multiple contacts
+const list = await sock.fetchContactUsernames('1234567890@s.whatsapp.net', '0987654321@s.whatsapp.net')
+
+// Get username suggestions from WhatsApp
+const suggestions = await sock.getUsernameRecommendations()
 ```
 
 ---
@@ -1734,6 +1818,47 @@ await sock.updateReadReceiptsPrivacy('all')
 await sock.updateGroupsAddPrivacy('contacts')
 ```
 
+### Extended Privacy (MEX-based)
+
+```javascript
+// Update your About/bio text (with optional emoji)
+await sock.updateTextStatus('Available for chats', '👋')
+
+// Get About text of multiple contacts
+const statuses = await sock.getTextStatusList(['1234567890@s.whatsapp.net'])
+
+// Fetch profile picture info for a user
+const info = await sock.fetchUserPictureInfo('1234567890@s.whatsapp.net')
+
+// Set profile picture via MEX
+await sock.setProfilePictureMex(imageBase64)
+
+// Trusted devices
+const devices = await sock.getTrustedDevices()
+await sock.addTrustedDevice('device_id', 'My Laptop')
+await sock.untrustTrustedDevice('device_id')
+await sock.deleteTrustedDevice('device_id')
+
+// Multi-account
+await sock.addMultiAccountLink('1234567890')
+await sock.revokeMultiAccount('1234567890@s.whatsapp.net')
+
+// Check if contacts/businesses are valid WA users
+const contacts = await sock.contactIntegrityQuery(['1234567890@s.whatsapp.net'])
+const businesses = await sock.bizIntegrityQuery(['1234567890@s.whatsapp.net'])
+
+// Link / unlink Facebook or Instagram profile
+await sock.linkedProfilesSet([{ type: 'FB', username: 'myprofile' }])
+await sock.linkedProfilesRemove(['FB'])
+await sock.linkedProfilesUpdate([{ type: 'FB', showOnProfile: true }])
+
+// Migrate blocklist to LID system
+await sock.migrateBlocklistLid(['1234567890@s.whatsapp.net'])
+
+// Notify group members of your push name
+await sock.notifyPushName(groupJid, [{ jid: '1234567890@s.whatsapp.net', pushName: 'John' }])
+```
+
 ---
 
 ## 💬 Chat Operations
@@ -1781,6 +1906,26 @@ await sock.newsletterUnfollow(newsletterJid)
 await sock.newsletterMute(newsletterJid)
 await sock.newsletterUnmute(newsletterJid)
 ```
+
+## 🤖 Meta AI Messages
+
+Meta AI bot messages (`msmsg` encrypted responses) are now automatically decrypted when received. They arrive as regular messages in `messages.upsert` once decrypted:
+
+```javascript
+sock.ev.on('messages.upsert', async ({ messages }) => {
+  for (const msg of messages) {
+    if (!msg.message) continue
+
+    // Meta AI responses appear as regular extendedTextMessage or other content
+    const content = extractMessageContent(msg.message)
+    if (content?.extendedTextMessage?.text) {
+      console.log('Message (possibly Meta AI):', content.extendedTextMessage.text)
+    }
+  }
+})
+```
+
+If decryption fails (e.g. missing message secret), the message is gracefully NACKed and logged — it won't crash your session.
 
 ---
 
