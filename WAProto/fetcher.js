@@ -37,8 +37,16 @@ const PAGE_HEADERS = {
 }
 
 const agent = new Agent({ connect: { family: 4 } })
-
 const TRANSIENT_ERRORS = new Set(['ETIMEDOUT', 'ECONNREFUSED', 'ENETUNREACH', 'ENOTFOUND', 'EAI_AGAIN'])
+
+function readCache() {
+    if (!existsSync(CACHE_FILE)) return {}
+    try { return JSON.parse(readFileSync(CACHE_FILE, 'utf8')) } catch { return {} }
+}
+
+function writeCache(data) {
+    writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2), 'utf8')
+}
 
 async function withRetry(fn, retries = 3) {
     let delay = 1000
@@ -49,15 +57,6 @@ async function withRetry(fn, retries = 3) {
             delay = Math.min(delay * 2, 30000)
         }
     }
-}
-
-function readCache() {
-    if (!existsSync(CACHE_FILE)) return {}
-    try { return JSON.parse(readFileSync(CACHE_FILE, 'utf8')) } catch { return {} }
-}
-
-function writeCache(data) {
-    writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2), 'utf8')
 }
 
 async function fetchText(url, headers) {
@@ -84,13 +83,13 @@ async function fetchBundleUrls() {
 }
 
 async function fetchCombinedBundle(bundleUrls) {
-    const chunks = []
-    for (const url of bundleUrls) {
-        let text
-        try { text = await fetchText(url, SCRIPT_HEADERS) } catch { continue }
-        if (text.includes('internalSpec')) chunks.push(text)
-    }
-    if (chunks.length === 0) throw new Error('[WAProto] No proto bundles found in WA Web JS files')
+    const results = await Promise.allSettled(
+        bundleUrls.map(url => fetchText(url, SCRIPT_HEADERS))
+    )
+    const chunks = results
+        .filter(r => r.status === 'fulfilled' && r.value.includes('internalSpec'))
+        .map(r => r.value)
+    if (!chunks.length) throw new Error('[WAProto] No proto bundles found in WA Web JS files')
     return chunks.join('\n')
 }
 
@@ -104,12 +103,10 @@ export async function fetchProtoBundle() {
 
     const bundleUrls = await fetchBundleUrls()
     let bundle = await fetchCombinedBundle(bundleUrls)
-
     const hash = createHash('sha256').update(bundle).digest('hex')
 
     if (cache.hash === hash) {
         writeCache({ version, hash })
-        bundle = null
         return { changed: false, bundle: null, version }
     }
 
@@ -121,6 +118,6 @@ export async function fetchProtoBundle() {
 
 export async function getWAVersion() {
     const cache = readCache()
-    if (cache.version) return cache.version
-    return fetchClientRevision()
+    const rev = cache.version ?? await fetchClientRevision()
+    return [2, 3000, parseInt(rev)]
 }
