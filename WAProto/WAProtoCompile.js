@@ -20,17 +20,11 @@ const KIND = [
 ]
 
 const SCALAR_TC = {
-    int32: 0, uint32: 0,
-    sint32: 1,
-    bool: 2,
-    fixed64: 3, sfixed64: 3,
-    double: 4,
-    fixed32: 5, sfixed32: 5,
-    float: 6,
-    string: 7,
-    bytes: 8,
-    int64: 10, uint64: 10,
-    sint64: 11,
+    int32: 0, uint32: 0, sint32: 1, bool: 2,
+    fixed64: 3, sfixed64: 3, double: 4,
+    fixed32: 5, sfixed32: 5, float: 6,
+    string: 7, bytes: 8,
+    int64: 10, uint64: 10, sint64: 11,
 }
 
 const isLongLike = v => v !== null && typeof v === 'object' && 'low' in v && 'high' in v
@@ -39,23 +33,23 @@ const anyToBigInt = v => typeof v === 'bigint' ? v : isLongLike(v) ? longToBigIn
 const zigzagEncode = v => BigInt.asUintN(64, anyToBigInt(v) << 1n ^ anyToBigInt(v) >> 63n)
 const numOrBigInt = b => b <= 9007199254740991n && b >= -9007199254740991n ? Number(b) : b
 const toLong = big => Long.fromString(BigInt.asIntN(64, big).toString())
+const wireType = f => f.k === 'varint' ? 0 : f.k === 'i64' ? 1 : f.k === 'i32' ? 5 : 2
+
 const toBuffer = v => {
+    if (v == null) return Buffer.alloc(0)
     if (Buffer.isBuffer(v)) return v
     if (typeof v === 'string') return Buffer.from(v, 'base64')
-    if (v?.type === 'Buffer') return Buffer.from(v.data)
+    if (v?.type === 'Buffer' && Array.isArray(v.data)) return Buffer.from(v.data)
     if (v instanceof Uint8Array) return Buffer.from(v)
-    return Buffer.from(v)
+    if (typeof v === 'object') return Buffer.from(JSON.stringify(v))
+    return Buffer.alloc(0)
 }
 
 const B64_JSON = function () { return this.toString('base64') }
 const tagBytes = b => (Object.defineProperty(b, 'toJSON', { value: B64_JSON, enumerable: false, configurable: true }), b)
-const wireType = f => f.k === 'varint' ? 0 : f.k === 'i64' ? 1 : f.k === 'i32' ? 5 : 2
 
 class Writer {
-    constructor() {
-        this.buf = new Uint8Array(256)
-        this.len = 0
-    }
+    constructor() { this.buf = new Uint8Array(256); this.len = 0 }
 
     _grow(n) {
         if (this.len + n <= this.buf.length) return
@@ -66,46 +60,27 @@ class Writer {
         this.buf = next
     }
 
-    byte(b) {
-        this._grow(1)
-        this.buf[this.len++] = b
-    }
-
-    raw(u) {
-        this._grow(u.length)
-        this.buf.set(u, this.len)
-        this.len += u.length
-    }
+    byte(b) { this._grow(1); this.buf[this.len++] = b }
+    raw(u) { this._grow(u.length); this.buf.set(u, this.len); this.len += u.length }
+    tag(f, wire) { this.varintNum(f * 8 + wire) }
 
     varintNum(n) {
         this._grow(10)
-        while (n > 0x7f) {
-            this.buf[this.len++] = (n & 0x7f) | 0x80
-            n = Math.floor(n / 128)
-        }
+        while (n > 0x7f) { this.buf[this.len++] = (n & 0x7f) | 0x80; n = Math.floor(n / 128) }
         this.buf[this.len++] = n
     }
 
     varintBig(v) {
         this._grow(10)
         let n = BigInt.asUintN(64, v)
-        while (n > 0x7fn) {
-            this.buf[this.len++] = Number((n & 0x7fn) | 0x80n)
-            n >>= 7n
-        }
+        while (n > 0x7fn) { this.buf[this.len++] = Number((n & 0x7fn) | 0x80n); n >>= 7n }
         this.buf[this.len++] = Number(n)
     }
 
-    tag(field, wire) {
-        this.varintNum(field * 8 + wire)
-    }
-
     vint(v) {
-        if (typeof v === 'number' && v >= 0 && v <= MAXSAFE && Number.isInteger(v)) {
-            this.varintNum(v)
-        } else {
-            this.varintBig(anyToBigInt(v))
-        }
+        typeof v === 'number' && v >= 0 && v <= MAXSAFE && Number.isInteger(v)
+            ? this.varintNum(v)
+            : this.varintBig(anyToBigInt(v))
     }
 
     fixed32(v) {
@@ -124,73 +99,69 @@ class Writer {
         this.raw(b)
     }
 
-    float(v) {
-        this._grow(4)
-        const b = Buffer.allocUnsafe(4)
-        b.writeFloatLE(v)
-        this.raw(b)
-    }
-
-    double(v) {
-        this._grow(8)
-        const b = Buffer.allocUnsafe(8)
-        b.writeDoubleLE(v)
-        this.raw(b)
-    }
-
-    finish() {
-        return Buffer.from(this.buf.buffer, this.buf.byteOffset, this.len)
-    }
+    float(v) { this._grow(4); const b = Buffer.allocUnsafe(4); b.writeFloatLE(v); this.raw(b) }
+    double(v) { this._grow(8); const b = Buffer.allocUnsafe(8); b.writeDoubleLE(v); this.raw(b) }
+    finish() { return Buffer.from(this.buf.buffer, this.buf.byteOffset, this.len) }
 }
 
 class Reader {
     constructor(buf) {
-        this.buf = buf instanceof Buffer ? buf : Buffer.from(buf)
+        this.buf = Buffer.isBuffer(buf) ? buf : Buffer.from(buf)
         this.p = 0
         this.len = this.buf.length
     }
 
+    _check(n) {
+        if (this.p + n > this.len) throw new RangeError(`[WAProto] buffer overread: need ${n} bytes at ${this.p}, have ${this.len - this.p}`)
+    }
+
     varint() {
-        const start = this.p
         let r = 0, mult = 1, b, n = 0
         do {
+            if (this.p >= this.len) throw new RangeError('[WAProto] varint: unexpected end of buffer')
             b = this.buf[this.p++]
             r += (b & 0x7f) * mult
             mult *= 128
             n++
+            if (n > 10) throw new RangeError('[WAProto] varint: too many bytes')
         } while (b & 0x80)
-        if (n > 7) {
-            this.p = start
-            return this.varintBig()
-        }
-        return r
+        // clamp to safe integer range — tags and lengths are never huge
+        return r > Number.MAX_SAFE_INTEGER ? Number(BigInt.asIntN(64, BigInt(Math.trunc(r)))) : r
     }
 
     varintBig() {
-        let r = 0n, s = 0n, b
+        let r = 0n, s = 0n, b, n = 0
         do {
+            if (this.p >= this.len) throw new RangeError('[WAProto] varintBig: unexpected end of buffer')
             b = this.buf[this.p++]
             r |= BigInt(b & 0x7f) << s
             s += 7n
+            n++
+            if (n > 10) throw new RangeError('[WAProto] varintBig: too many bytes')
         } while (b & 0x80)
         return r
     }
 
     skipVarint() {
-        while (this.buf[this.p++] & 0x80) { }
+        let n = 0
+        while (this.p < this.len && this.buf[this.p++] & 0x80) { if (++n > 10) throw new RangeError('[WAProto] skipVarint overflow') }
     }
 
     u32() {
-        const p = this.p
-        this.p += 4
+        this._check(4)
+        const p = this.p; this.p += 4
         return (this.buf[p] | this.buf[p + 1] << 8 | this.buf[p + 2] << 16 | this.buf[p + 3] << 24) >>> 0
     }
 
     slice(len) {
+        if (len < 0 || this.p + len > this.len) throw new RangeError(`[WAProto] slice: invalid length ${len} at ${this.p}`)
         const s = this.buf.subarray(this.p, this.p + len)
         this.p += len
         return s
     }
+
+    read8() { this._check(8); const b = this.buf.subarray(this.p, this.p + 8); this.p += 8; return b }
+    read4() { this._check(4); const b = this.buf.subarray(this.p, this.p + 4); this.p += 4; return b }
 }
 
 function buildTable(rawTable, msgNames) {
@@ -202,49 +173,12 @@ function buildTable(rawTable, msgNames) {
             if (tc === 9 && enumName) f.enumName = enumName
             return f
         })
-        const byId = Object.fromEntries(order.map(f => [f.id, f]))
-        TABLE[full] = { order, byId }
+        TABLE[full] = { order, byId: Object.fromEntries(order.map(f => [f.id, f])) }
     }
     return TABLE
 }
 
 function makeCodec(TABLE, enumIndex) {
-    function writeScalar(w, f, v) {
-        switch (f.k) {
-            case 'varint':
-                if (f.s === 'bool') w.byte(v ? 1 : 0)
-                else if (f.s === 'zigzag' || f.s === 'zigzaglong') w.varintBig(zigzagEncode(v))
-                else w.vint(v)
-                break
-            case 'i64':
-                f.s === 'double' ? w.double(v) : w.fixed64(v)
-                break
-            case 'i32':
-                f.s === 'float' ? w.float(v) : w.fixed32(v)
-                break
-            case 'string': {
-                const b = Buffer.from(String(v), 'utf8')
-                w.varintNum(b.length)
-                w.raw(b)
-                break
-            }
-            case 'bytes': {
-                const b = toBuffer(v)
-                w.varintNum(b.length)
-                w.raw(b)
-                break
-            }
-            case 'msg': {
-                const s = new Writer()
-                encodeMsg(s, TABLE[f.msg], v)
-                const b = s.finish()
-                w.varintNum(b.length)
-                w.raw(b)
-                break
-            }
-        }
-    }
-
     function resolveEnum(f, v) {
         if (typeof v !== 'string') return v
         if (f.enumName && enumIndex[f.enumName]) {
@@ -255,12 +189,32 @@ function makeCodec(TABLE, enumIndex) {
         return Number.isFinite(n) ? n : undefined
     }
 
+    function writeScalar(w, f, v) {
+        switch (f.k) {
+            case 'varint':
+                if (f.s === 'bool') w.byte(v ? 1 : 0)
+                else if (f.s === 'zigzag' || f.s === 'zigzaglong') w.varintBig(zigzagEncode(v))
+                else w.vint(v)
+                break
+            case 'i64': f.s === 'double' ? w.double(v) : w.fixed64(v); break
+            case 'i32': f.s === 'float' ? w.float(v) : w.fixed32(v); break
+            case 'string': { const b = Buffer.from(String(v), 'utf8'); w.varintNum(b.length); w.raw(b); break }
+            case 'bytes': { const b = toBuffer(v); w.varintNum(b.length); w.raw(b); break }
+            case 'msg': {
+                const s = new Writer()
+                encodeMsg(s, TABLE[f.msg], v)
+                const b = s.finish()
+                w.varintNum(b.length); w.raw(b)
+                break
+            }
+        }
+    }
+
     function encodeMsg(w, T, obj) {
         if (!T) throw new Error('[WAProto] Unknown message in table')
         for (const f of T.order) {
             let v = obj[f.name]
             if (v == null) continue
-
             if (f.s === 'enum') {
                 if (f.rep) {
                     v = (Array.isArray(v) ? v : [v]).map(x => resolveEnum(f, x)).filter(x => x !== undefined)
@@ -270,22 +224,16 @@ function makeCodec(TABLE, enumIndex) {
                     if (v === undefined) continue
                 }
             }
-
             if (f.rep) {
                 if (!Array.isArray(v)) v = [v]
                 if (f.packed && (f.k === 'varint' || f.k === 'i64' || f.k === 'i32')) {
                     const s = new Writer()
                     for (const item of v) writeScalar(s, f, item)
                     const b = s.finish()
-                    w.tag(f.id, 2)
-                    w.varintNum(b.length)
-                    w.raw(b)
+                    w.tag(f.id, 2); w.varintNum(b.length); w.raw(b)
                 } else {
                     const wt = wireType(f)
-                    for (const item of v) {
-                        w.tag(f.id, wt)
-                        writeScalar(w, f, item)
-                    }
+                    for (const item of v) { w.tag(f.id, wt); writeScalar(w, f, item) }
                 }
             } else {
                 w.tag(f.id, wireType(f))
@@ -298,118 +246,86 @@ function makeCodec(TABLE, enumIndex) {
         switch (f.k) {
             case 'varint': {
                 if (f.s === 'bool') return !!r.varint()
-                if (f.s === 'zigzag') {
-                    const u = r.varintBig()
-                    return numOrBigInt(u >> 1n ^ -(u & 1n))
-                }
-                if (f.s === 'zigzaglong') {
-                    const u = r.varintBig()
-                    return toLong(u >> 1n ^ -(u & 1n))
-                }
-                if (f.s === 'enum') {
-                    const v = r.varint()
-                    return typeof v === 'bigint' ? Number(BigInt.asIntN(32, v)) : v | 0
-                }
-                if (f.s === 'long') {
-                    const v = r.varint()
-                    return toLong(typeof v === 'bigint' ? v : BigInt(v))
-                }
-                const v = r.varint()
-                return typeof v === 'bigint' ? numOrBigInt(BigInt.asIntN(64, v)) : v
+                if (f.s === 'zigzag') { const u = r.varintBig(); return numOrBigInt(u >> 1n ^ -(u & 1n)) }
+                if (f.s === 'zigzaglong') { const u = r.varintBig(); return toLong(u >> 1n ^ -(u & 1n)) }
+                if (f.s === 'enum') return r.varint() | 0
+                if (f.s === 'long') return toLong(BigInt(r.varint()))
+                return r.varint()
             }
             case 'i64': {
-                const b = Buffer.from(r.buf.buffer, r.buf.byteOffset + r.p, 8)
-                r.p += 8
+                const b = Buffer.from(r.read8())
                 return f.s === 'double' ? b.readDoubleLE(0) : toLong(b.readBigUInt64LE(0))
             }
             case 'i32': {
-                if (f.s === 'float') {
-                    const b = Buffer.from(r.buf.buffer, r.buf.byteOffset + r.p, 4)
-                    r.p += 4
-                    return b.readFloatLE(0)
-                }
+                if (f.s === 'float') { const b = Buffer.from(r.read4()); return b.readFloatLE(0) }
                 return r.u32()
             }
             case 'string': {
                 const len = r.varint()
-                const s = Buffer.from(r.buf.buffer, r.buf.byteOffset + r.p, len).toString('utf8')
-                r.p += len
+                const s = Buffer.from(r.slice(len)).toString('utf8')
                 return s
             }
-            case 'bytes': {
-                const len = r.varint()
-                return tagBytes(Buffer.from(r.slice(len)))
-            }
-            case 'msg': {
-                const len = r.varint()
-                return decodeMsg(f.msg, r.slice(len))
-            }
+            case 'bytes': return tagBytes(Buffer.from(r.slice(r.varint())))
+            case 'msg': return decodeMsg(f.msg, r.slice(r.varint()))
         }
     }
 
     function skip(r, wire) {
         if (wire === 0) r.skipVarint()
-        else if (wire === 2) r.p += r.varint()
-        else if (wire === 1) r.p += 8
-        else if (wire === 5) r.p += 4
+        else if (wire === 2) { const n = r.varint(); r.slice(n) }
+        else if (wire === 1) r.read8()
+        else if (wire === 5) r.read4()
     }
 
     function decodeMsg(msgName, buf) {
         const T = TABLE[msgName]
         if (!T) throw new Error(`[WAProto] Unknown message: ${msgName}`)
-        const obj = {}
-        const r = new Reader(buf)
+        const obj = {}, r = new Reader(buf)
         while (r.p < r.len) {
-            const tag = r.varint()
-            const id = tag >>> 3
-            const wire = tag & 7
+            let tag, id, wire
+            try {
+                tag = r.varint()
+                id = tag >>> 3
+                wire = tag & 7
+            } catch { break }
+
             const f = T.byId[id]
-            if (!f) { skip(r, wire); continue }
-            if (f.rep && wire === 2 && (f.k === 'varint' || f.k === 'i64' || f.k === 'i32')) {
-                const len = r.varint()
-                const end = r.p + len
-                const arr = obj[f.name] || (obj[f.name] = [])
-                while (r.p < end) arr.push(readScalar(r, f))
-            } else {
-                const val = readScalar(r, f)
-                if (f.rep) (obj[f.name] || (obj[f.name] = [])).push(val)
-                else obj[f.name] = val
-            }
+            if (!f) { try { skip(r, wire) } catch { break }; continue }
+
+            try {
+                if (f.rep && wire === 2 && (f.k === 'varint' || f.k === 'i64' || f.k === 'i32')) {
+                    const len = r.varint()
+                    const end = r.p + len
+                    const arr = obj[f.name] || (obj[f.name] = [])
+                    while (r.p < end) arr.push(readScalar(r, f))
+                } else {
+                    const val = readScalar(r, f)
+                    if (f.rep) (obj[f.name] || (obj[f.name] = [])).push(val)
+                    else obj[f.name] = val
+                }
+            } catch { break }
         }
         return obj
     }
 
     return {
-        encode: (msgName, obj) => {
-            const w = new Writer()
-            encodeMsg(w, TABLE[msgName], obj ?? {})
-            return w.finish()
-        },
+        encode: (msgName, obj) => { const w = new Writer(); encodeMsg(w, TABLE[msgName], obj ?? {}); return w.finish() },
         decode: (msgName, buf) => decodeMsg(msgName, buf),
     }
 }
-
 
 export async function generateTable(protoPath, outPath) {
     const pb = await import('protobufjs')
     const protobuf = pb.default || pb
     const root = await protobuf.load(protoPath)
-
     const msgNames = []
-    const msgIndex = n => {
-        let i = msgNames.indexOf(n)
-        return i < 0 ? msgNames.push(n) - 1 : i
-    }
-
-    const t = {}
-    const e = {}
+    const msgIndex = n => { let i = msgNames.indexOf(n); return i < 0 ? msgNames.push(n) - 1 : i }
+    const t = {}, e = {}
 
     const build = ns => {
         for (const o of Object.values(ns.nested ?? {})) {
             const full = o.fullName.replace(/^\./, '')
-            if (o.values) {
-                e[full] = o.values
-            }
+            if (o.values) e[full] = o.values
             if (o.fieldsArray) {
                 const fs = []
                 for (const f of o.fieldsArray) {
@@ -419,8 +335,7 @@ export async function generateTable(protoPath, outPath) {
                     if (rt?.fieldsArray !== undefined && rt?.values === undefined) {
                         tc = 100 + msgIndex(rt.fullName.replace(/^\./, ''))
                     } else if (rt?.values) {
-                        tc = 9
-                        enumName = rt.fullName.replace(/^\./, '')
+                        tc = 9; enumName = rt.fullName.replace(/^\./, '')
                     } else {
                         tc = SCALAR_TC[f.type]
                     }
@@ -438,7 +353,6 @@ export async function generateTable(protoPath, outPath) {
     }
 
     build(root)
-
     writeFileSync(outPath, JSON.stringify({ m: msgNames, t, e }))
     return { types: Object.keys(t).length, enums: Object.keys(e).length }
 }
@@ -447,8 +361,8 @@ function makeProto(tablePath) {
     const { m, t, e } = JSON.parse(readFileSync(tablePath, 'utf8'))
     const TABLE = buildTable(t, m)
     const codec = makeCodec(TABLE, e)
-
     const proto = {}
+
     const nodeFor = path => {
         let c = proto
         for (const p of path) c = c[p] ?? (c[p] = {})
@@ -468,10 +382,7 @@ function makeProto(tablePath) {
 
     for (const [full, values] of Object.entries(e)) {
         const node = nodeFor(full.replace(/^proto\./, '').split('.'))
-        for (const [k, v] of Object.entries(values)) {
-            node[k] = v
-            node[v] = k
-        }
+        for (const [k, v] of Object.entries(values)) { node[k] = v; node[v] = k }
     }
 
     return { proto, codec }
@@ -484,13 +395,22 @@ if (isGeneratorRun) {
     const protoPath = fileURLToPath(new URL('./WAProto.proto', import.meta.url))
     const outPath = fileURLToPath(new URL('./WAProto.json', import.meta.url))
     generateTable(protoPath, outPath)
-        .then(r => { console.log(`[WAProto] Generated: ${r.types} types, ${r.enums} enums`); process.exit(0) })
-        .catch(err => { console.error(err); process.exit(1) })
+        .then(r => { process.stdout.write(`[WAProto] Generated: ${r.types} types, ${r.enums} enums\n`); process.exit(0) })
+        .catch(err => { process.stderr.write(err.message + '\n'); process.exit(1) })
 }
 
 const tablePath = fileURLToPath(new URL('./WAProto.json', import.meta.url))
-const built = isGeneratorRun || !existsSync(tablePath) ? { proto: {}, codec: null } : makeProto(tablePath)
+const built = { proto: {}, codec: null }
+
+export function _reloadProto() {
+    if (!existsSync(tablePath)) return
+    const loaded = makeProto(tablePath)
+    Object.assign(built.proto, loaded.proto)
+    built.codec = loaded.codec
+}
+
+if (!isGeneratorRun && existsSync(tablePath)) _reloadProto()
 
 export const proto = built.proto
 export const codec = built.codec
-export default { proto, codec }
+export default built
