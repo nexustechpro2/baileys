@@ -247,6 +247,7 @@ export function generateProto3(modulesInfo, moduleIndentationMap, version) {
             return [`oneof ${info.name} {`, ...addPrefix([].concat(...info.members.map(m => stringifyMember(m, false))), indent), '}']
         }
         if (info.flags.includes('packed')) { info.flags.splice(info.flags.indexOf('packed'), 1); info.packed = ' [packed=true]' }
+        const reqIdx = info.flags.indexOf('required'); if (reqIdx !== -1) info.flags[reqIdx] = 'optional'
         if (completeFlags && !info.flags.length && info.type && !info.type.includes('map')) info.flags.push('optional')
 
         const indentation = moduleIndentationMap[info.type]?.indentation
