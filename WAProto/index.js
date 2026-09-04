@@ -2,20 +2,19 @@ import { fetchProtoBundle } from './fetcher.js'
 import { parseAndWriteProto } from './parser.js'
 import { generateTable, _reloadProto } from './WAProtoCompile.js'
 import { fileURLToPath } from 'url'
-import { existsSync, unlinkSync } from 'fs'
+import { existsSync } from 'fs'
 
 const PROTO_FILE = fileURLToPath(new URL('./WAProto.proto', import.meta.url))
 const TABLE_FILE = fileURLToPath(new URL('./WAProto.json', import.meta.url))
 
-// Wipe stale files on every cold start so we always regenerate from live WA bundle
-try { unlinkSync(PROTO_FILE) } catch { }
-try { unlinkSync(TABLE_FILE) } catch { }
-
-const { bundle, version } = await fetchProtoBundle()
-if (bundle) {
-    await parseAndWriteProto(bundle, version)
-    await generateTable(PROTO_FILE, TABLE_FILE)
-    _reloadProto()
+// First run: block until proto and table are generated
+if (!existsSync(PROTO_FILE) || !existsSync(TABLE_FILE)) {
+    const { bundle, version } = await fetchProtoBundle()
+    if (bundle) {
+        await parseAndWriteProto(bundle, version)
+        await generateTable(PROTO_FILE, TABLE_FILE)
+        _reloadProto()
+    }
 }
 
 // Background: keep proto in sync with WA Web updates
