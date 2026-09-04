@@ -84,7 +84,6 @@
     "prepack": "echo 'NexusTechPro WhatsApp Library'",
     "prepare": "echo 'NexusTechPro WhatsApp Library'",
     "preinstall": "node ./engine-requirements.js",
-    "postinstall": "node ./lib/Utils/patch-sharp.js",
     "release": "release-it",
     "test": "jest"
   },
