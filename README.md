@@ -61,6 +61,7 @@
   - [Keyv-based (MongoDB, Redis, PostgreSQL, SQLite...)](#keyv-based-production)
   - [Per-type routing](#per-type-routing-advanced)
 - [Sending Messages](#-sending-messages)
+  - [Content Key Reference](#content-key-reference)
   - [Text Messages](#text-messages)
   - [Media Messages](#media-messages)
   - [Buttons & Interactive](#buttons--interactive-messages)
@@ -79,6 +80,17 @@
 - [Privacy Controls](#-privacy-controls)
 - [Chat Operations](#-chat-operations)
 - [Newsletter / Channels](#-newsletter--channels)
+- [Builder API](#-builder-api)
+  - [AIRich Builder](#airich-builder)
+  - [Button Builder](#button-builder)
+  - [Carousel Builder](#carousel-builder)
+  - [Album Builder](#album-builder)
+  - [Poll Builder](#poll-builder)
+  - [Event Builder](#event-builder)
+  - [Payment Builder](#payment-builder)
+  - [Order Builder](#order-builder)
+- [Utility Methods](#-utility-methods)
+- [Exported Utilities](#-exported-utilities)
 - [Events Reference](#-events-reference)
 - [Best Practices](#-best-practices)
 - [Disclaimer](#️-disclaimer)
@@ -453,6 +465,42 @@ await clearSession()
 '120363...@newsletter'           // newsletter channel
 ```
 
+### Content Key Reference
+
+Every key you can pass to `sock.sendMessage`:
+
+| Key | Description |
+|-----|-------------|
+| `text` | Plain text or markdown |
+| `image` | Image message |
+| `video` | Video message |
+| `audio` | Audio / voice message |
+| `document` | File / document |
+| `sticker` | Sticker |
+| `location` | Location pin |
+| `contacts` | Contact card(s) |
+| `react` | Emoji reaction |
+| `poll` | Poll creation |
+| `forward` | Forward a message |
+| `delete` | Delete a message |
+| `edit` | Edit a sent message |
+| `pin` | Pin / unpin a message |
+| `keep` | Keep / unkeep a message |
+| `disappearingMessagesInChat` | Set disappearing timer |
+| `aiRich` | AI Rich message (text, code, table, images, sources, reels, latex, parts) |
+| `albumMessage` | Media album (2+ images/videos) |
+| `carouselMessage` | Interactive card carousel |
+| `groupStatus` | Post text/media to a group's story |
+| `interactiveMessage` | Raw interactive message object |
+| `requestPaymentMessage` | Payment request |
+| `orderMessage` | Order message |
+| `eventMessage` | Event / calendar invite |
+| `stickerPack` | Sticker pack |
+| `statusMentionMessage` | Mention someone in a status |
+| `pollResultMessage` | Poll result snapshot |
+
+---
+
 ### Text Messages
 
 ```javascript
@@ -569,6 +617,7 @@ await sock.sendMessage(jid, {
 
 #### Poll
 ```javascript
+// Standard poll
 await sock.sendMessage(jid, {
   poll: {
     name: 'Favorite Color?',
@@ -577,6 +626,34 @@ await sock.sendMessage(jid, {
     toAnnouncementGroup: false
   }
 })
+
+// Quiz poll (single correct answer)
+await sock.sendMessage(jid, {
+  poll: {
+    name: 'What is 2+2?',
+    values: ['3', '4', '5'],
+    selectableOptionsCount: 1,
+    pollType: 1,        // 1 = quiz
+    correctAnswer: '4'
+  }
+})
+
+// Timed poll
+await sock.sendMessage(jid, {
+  poll: {
+    name: 'Quick vote!',
+    values: ['Yes', 'No'],
+    endTime: Math.floor(Date.now() / 1000) + 3600, // 1 hour
+    hideParticipantName: true,
+    allowAddOption: false
+  }
+})
+
+// Or use the Poll builder — see Builder API section
+await sock.poll()
+  .name('Favorite Color?')
+  .options(['Red', 'Blue', 'Green'])
+  .send(jid)
 ```
 
 #### Pin Message
@@ -741,8 +818,19 @@ await sock.sendMessage(jid, {
 | URL | `cta_url` | `display_text`, `url`, `merchant_url` |
 | Call | `cta_call` | `display_text`, `phone_number` |
 | Copy | `cta_copy` | `display_text`, `copy_code` |
+| Open Webview | `cta_open_webview` | `display_text`, `url` |
+| Reminder | `cta_reminder` | `display_text` |
+| Cancel Reminder | `cta_cancel_reminder` | `display_text` |
+| Address | `address` | `display_text` |
+| Send Location | `send_location` | `display_text` |
+| Flow | `flow` | `display_text`, `flow_id`, `flow_token` |
+| Catalog | `catalog` | `display_text` |
+| Review & Pay | `review_and_pay` | `display_text` |
+| Review Order | `review_order` | `display_text` |
+| Order Details | `order_details` | `display_text` |
+| Payment Status | `payment_status` | `display_text` |
+| Transaction Details | `transaction_details` | `display_text` |
 | List/Select | `single_select` | `title`, `sections[].rows[]` |
-| Call Permission | `call_permission_request` | `has_multiple_buttons` |
 
 #### List / Single Select
 ```javascript
@@ -913,60 +1001,147 @@ await sock.sendMessage(jid, {
 All of these go through `sock.sendMessage` — the library detects the type automatically.
 
 #### Album
+
 ```javascript
+// via sendMessage
 await sock.sendMessage(jid, {
   albumMessage: [
     { image: { url: 'https://example.com/1.jpg' }, caption: 'Photo 1' },
-    { video: { url: 'https://example.com/2.mp4' }, caption: 'Video 1' }
+    { image: { url: 'https://example.com/2.jpg' }, caption: 'Photo 2' },
+    { video: { url: 'https://example.com/3.mp4' }, caption: 'Video 1' }
   ]
-}, { quoted: message })
+}, { albumDelay: 1500 })
 
-// Shorthand
+// via shorthand
 await sock.sendAlbumMessage(jid, [
-  { image: { url: 'https://example.com/1.jpg' }, caption: 'Photo 1' }
-], message)
+  { image: { url: 'https://example.com/1.jpg' }, caption: 'Photo 1' },
+  { video: { url: 'https://example.com/2.mp4' }, caption: 'Video 1' }
+], quoted)
+
+// via builder — see Builder API section
+await sock.album()
+  .image('https://example.com/1.jpg', 'Photo 1')
+  .image('https://example.com/2.jpg', 'Photo 2')
+  .video('https://example.com/3.mp4', 'Video 1')
+  .send(jid)
 ```
 
 #### Carousel
+
 ```javascript
+// via sendMessage
 await sock.sendMessage(jid, {
   carouselMessage: {
     caption: 'Our Products',
     footer: 'Powered by NexusTechPro',
     cards: [
       {
-        headerTitle: 'Card 1',
-        imageUrl: 'https://example.com/1.jpg',
-        bodyText: 'Description',
-        buttons: [{ name: 'cta_url', params: { display_text: 'Visit', url: 'https://nexustechpro.com' } }]
+        header: { title: 'Card 1', hasMediaAttachment: false },
+        body: { text: 'Description of card 1' },
+        footer: { text: 'Footer' },
+        nativeFlowMessage: {
+          buttons: [
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Select', id: 'card1' }) },
+            { name: 'cta_url', buttonParamsJson: JSON.stringify({ display_text: 'Learn More', url: 'https://nexustechpro.com' }) }
+          ]
+        }
       },
       {
-        headerTitle: 'Product Card',
-        imageUrl: 'https://example.com/2.jpg',
-        productTitle: 'Premium Bot',
-        productDescription: 'Get access',
-        bodyText: 'Details here',
-        buttons: [{ name: 'cta_call', params: { display_text: 'Call', phone_number: '+1234567890' } }]
+        header: { title: 'Card 2', hasMediaAttachment: false },
+        body: { text: 'Description of card 2' },
+        footer: { text: 'Footer' },
+        nativeFlowMessage: {
+          buttons: [
+            { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Select', id: 'card2' }) }
+          ]
+        }
       }
     ]
   }
 })
+
+// via builder — see Builder API section
+await sock.carousel()
+  .setCaption('Our Products')
+  .setFooter('Powered by NexusTechPro')
+  .card(sock.button().setBody('Card 1 description').reply('Select', 'card1').url('Learn More', 'https://nexustechpro.com'))
+  .card(sock.button().setBody('Card 2 description').reply('Select', 'card2'))
+  .send(jid)
 ```
 
 #### Event
+
 ```javascript
+// via sendMessage
 await sock.sendMessage(jid, {
-  event: {
-    isCanceled: false,
-    name: 'Event Name',
-    description: 'Event Description',
-    location: { degreesLatitude: 0, degreesLongitude: 0, name: 'Venue' },
-    joinLink: 'https://meet.example.com/event',
-    startTime: Math.floor(Date.now() / 1000),
-    endTime: Math.floor(Date.now() / 1000) + 86400,
-    extraGuestsAllowed: true
+  eventMessage: {
+    name: 'NexusTech Conference',
+    description: 'Annual developer conference',
+    location: { degreesLatitude: 6.5244, degreesLongitude: 3.3792, name: 'Lagos, Nigeria' },
+    joinLink: 'https://meet.example.com/nexusconf',
+    startTime: Math.floor(Date.now() / 1000) + 86400,
+    endTime: Math.floor(Date.now() / 1000) + 172800,
+    extraGuestsAllowed: true,
+    hasReminder: true,
+    reminderOffsetSec: 3600  // remind 1 hour before
   }
-}, { quoted: message })
+})
+
+// via builder — see Builder API section
+await sock.event()
+  .setName('NexusTech Conference')
+  .setDescription('Annual developer conference')
+  .setLocation({ degreesLatitude: 6.5244, degreesLongitude: 3.3792, name: 'Lagos, Nigeria' })
+  .setJoinLink('https://meet.example.com/nexusconf')
+  .setStartTime(Math.floor(Date.now() / 1000) + 86400)
+  .setEndTime(Math.floor(Date.now() / 1000) + 172800)
+  .setReminder(3600)
+  .send(jid)
+```
+
+#### Request Payment
+
+```javascript
+// via sendMessage
+await sock.sendMessage(jid, {
+  requestPaymentMessage: {
+    currency: 'NGN',
+    amount: 10000000,
+    from: '1234567890@s.whatsapp.net',
+    note: 'Payment for order #123'
+  }
+})
+
+// via builder
+await sock.payment()
+  .setCurrency('NGN')
+  .setAmount(10000000)
+  .setFrom('1234567890@s.whatsapp.net')
+  .setNote('Payment for order #123')
+  .send(jid)
+```
+
+#### Order
+
+```javascript
+// via sendMessage
+await sock.sendMessage(jid, {
+  orderMessage: {
+    orderId: 'ORDER_001',
+    itemCount: 3,
+    totalAmount1000: 45000000,
+    totalCurrencyCode: 'NGN',
+    orderTitle: 'My Order',
+    message: 'Thank you for your order',
+    sellerJid: sock.user.id,
+    thumbnail: { url: 'https://example.com/product.jpg' }
+  }
+})
+
+// via builder
+await sock.order()
+  .from({ orderId: 'ORDER_001', itemCount: 3, totalAmount1000: 45000000, totalCurrencyCode: 'NGN', orderTitle: 'My Order' })
+  .send(jid)
 ```
 
 #### Product Message
@@ -991,29 +1166,6 @@ await sock.sendMessage(jid, {
 }, { quoted: message })
 ```
 
-#### Request Payment
-```javascript
-// With note
-await sock.sendMessage(jid, {
-  requestPayment: {
-    currency: 'IDR',
-    amount: '10000000',
-    from: '123456@s.whatsapp.net',
-    note: 'Payment for order #123'
-  }
-}, { quoted: message })
-
-// With sticker (URL or Buffer)
-await sock.sendMessage(jid, {
-  requestPayment: {
-    currency: 'IDR',
-    amount: '10000000',
-    from: '123456@s.whatsapp.net',
-    sticker: { url: 'https://example.com/sticker.webp' }
-  }
-})
-```
-
 #### Poll Result (Newsletter Style)
 ```javascript
 await sock.sendMessage(jid, {
@@ -1031,19 +1183,13 @@ Post a story/status visible only to a specific group.
 > All media types accept a URL, Buffer, file path, or WhatsApp CDN URL — no manual download needed.
 
 ```javascript
-// Text
+// via sendMessage
 await sock.sendMessage(jid, { groupStatus: { text: 'Hello group!' } })
-
-// Image
 await sock.sendMessage(jid, { groupStatus: { image: { url: 'https://example.com/image.jpg' }, caption: 'Caption' } })
-
-// Video
 await sock.sendMessage(jid, { groupStatus: { video: { url: 'https://example.com/video.mp4' }, caption: 'Caption' } })
-
-// Audio
 await sock.sendMessage(jid, { groupStatus: { audio: { url: 'https://example.com/audio.mp3' }, ptt: false } })
 
-// Via shorthand
+// via shorthand
 await sock.sendGroupStatusMessage(groupJid, { text: 'Hello group!' })
 await sock.sendGroupStatusMessage(groupJid, { image: { url: 'https://example.com/image.jpg' }, caption: 'Caption' })
 await sock.sendGroupStatusMessage(groupJid, { video: { url: 'https://example.com/video.mp4' }, caption: 'Caption' })
@@ -1201,12 +1347,11 @@ await sock.stickerPackMessage(jid, {
 
 ---
 
-#### AI Rich Messages
-
+### AI Rich Messages
 
 All types can be sent two ways:
 - **`sock.sendMessage`** with an `aiRich` content key
-- **Shorthand methods** like `sock.sendCodeBlock`, `sock.sendTable`, etc.
+- **`sock.airich()`** fluent builder — chain methods and call `.send(jid)`
 
 ---
 
@@ -1227,19 +1372,15 @@ await sock.sendMessage(jid, {
   }
 }, { quoted: message })
 
-// via shorthand (sendCodeBlock / sendCodeBlockV2)
-await sock.sendCodeBlock(jid, code, quoted, {
-  language: 'javascript',
-  title: 'Example Code',
-  footer: 'Powered by NexusTechPro'
-})
+// via builder
+await sock.airich()
+  .setTitle('Code Example')
+  .addCode('javascript', `const greet = name => \`Hello, \${name}!\``)
+  .send(jid)
 
-await sock.sendCodeBlockV2(jid, code, quoted, {
-  language: 'go',
-  title: 'Go Example',
-  text: 'Here is a Go snippet:',
-  footer: 'Powered by NexusTechPro'
-})
+// via shorthand
+await sock.sendCodeBlock(jid, code, quoted, { language: 'javascript', title: 'Example', footer: '© NexusTechPro' })
+await sock.sendCodeBlockV2(jid, code, quoted, { language: 'go', title: 'Go Example', text: 'Here is a Go snippet:', footer: '© NexusTechPro' })
 ```
 
 **Supported languages:** Any of the 190+ languages supported by PrismJS — `javascript`, `typescript`, `python`, `rust`, `go`, `java`, `cpp`, `kotlin`, `swift`, `bash`, `sql`, `dockerfile`, `solidity`, `graphql`, and many more.
@@ -1253,51 +1394,45 @@ await sock.sendCodeBlockV2(jid, code, quoted, {
 await sock.sendMessage(jid, {
   aiRich: {
     table: [
-      'Java vs JavaScript',             // title
-      ['Feature', 'Java', 'JavaScript'], // headers
+      'Java vs JavaScript',
+      ['Feature', 'Java', 'JavaScript'],
       ['Type', 'Compiled', 'Interpreted'],
       ['Typing', 'Static', 'Dynamic'],
       ['Main Use', 'Enterprise', 'Web']
     ],
-    header: '**Comparison**',
     footer: 'Hope this helps!'
   }
 }, { quoted: message })
 
-// via shorthand (sendTable)
-await sock.sendTable(
-  jid,
-  'Java vs JavaScript',
-  ['Feature', 'Java', 'JavaScript'],
-  [
+// via builder
+await sock.airich()
+  .setTitle('Comparison')
+  .addTable([
+    ['Feature', 'Java', 'JavaScript'],
     ['Type', 'Compiled', 'Interpreted'],
-    ['Typing', 'Static', 'Dynamic'],
-    ['Main Use', 'Enterprise', 'Web']
-  ],
-  quoted,
-  { headerText: 'Comparison:', footer: 'Hope this helps!' }
-)
+    ['Typing', 'Static', 'Dynamic']
+  ])
+  .send(jid)
 
-// via shorthand (sendTableV2) — pipe-delimited string format
-await sock.sendTableV2(
-  jid,
-  [
-    'Java vs JavaScript',
-    'Feature | Java | JavaScript',
-    'Type | Compiled | Interpreted;;Typing | Static | Dynamic;;Main Use | Enterprise | Web'
-  ],
-  quoted,
-  { headerText: 'Comparison:', text: 'Here is a table:', footer: 'Hope this helps!' }
-)
+// via shorthand
+await sock.sendTable(jid, 'Java vs JavaScript', ['Feature', 'Java', 'JavaScript'], [
+  ['Type', 'Compiled', 'Interpreted'],
+  ['Typing', 'Static', 'Dynamic']
+], quoted, { footer: 'Hope this helps!' })
+
+// sendTableV2 — pipe-delimited string format
+await sock.sendTableV2(jid, [
+  'Java vs JavaScript',
+  'Feature | Java | JavaScript',
+  'Type | Compiled | Interpreted;;Typing | Static | Dynamic'
+], quoted, { footer: 'Hope this helps!' })
 
 // sendList — two-column key/value style
-await sock.sendList(
-  jid,
-  'Bot Info',
-  [['Name', 'NexusTechPro'], ['Version', '2.1.3'], ['Developer', 'NexusTechPro']],
-  quoted,
-  { footer: '© NexusTechPro' }
-)
+await sock.sendList(jid, 'Bot Info', [
+  ['Name', 'NexusTechPro'],
+  ['Version', '2.2.7'],
+  ['Developer', 'NexusTechPro']
+], quoted, { footer: '© NexusTechPro' })
 ```
 
 ---
@@ -1320,6 +1455,14 @@ await sock.sendMessage(jid, {
     footer: '_NexusTechPro_'
   }
 }, { quoted: message })
+
+// via builder
+await sock.airich()
+  .addText('## Hello World\nThis is *bold* and _italic_.')
+  .addFOAText('# NexusTechPro\n## Powered by @nexustechpro/baileys')
+  .addTip('Always validate user input before processing.')
+  .addMetadata('Generated just now · NexusBot v2.2.7')
+  .send(jid)
 ```
 
 ---
@@ -1327,7 +1470,7 @@ await sock.sendMessage(jid, {
 ##### Links & Search Sources
 
 ```javascript
-// via sendMessage (with inline {{IE_N}} placeholders)
+// via sendMessage
 await sock.sendMessage(jid, {
   aiRich: {
     text: 'Upload complete:\n✅ Freeimage — {{IE_0}}view here{{/IE_0}}\n✅ Yardsansh — {{IE_1}}view here{{/IE_1}}',
@@ -1339,92 +1482,229 @@ await sock.sendMessage(jid, {
   }
 }, { quoted: message })
 
-// via sendLink shorthand (bare URL array)
-await sock.sendLink(
-  jid,
-  'Results:\n🔗 {{IE_0}}link one{{/IE_0}}\n🔗 {{IE_1}}link two{{/IE_1}}',
-  ['https://example.com/1', 'https://example.com/2'],
-  quoted,
-  { headerText: '📁 Upload Results', footer: '✨ Done!' }
-)
+// via builder
+await sock.airich()
+  .addText('Top results:')
+  .addSource([
+    { title: 'MDN Web Docs', url: 'https://developer.mozilla.org', favicon: 'https://developer.mozilla.org/favicon.ico' },
+    { title: 'NPM Registry', url: 'https://npmjs.com', favicon: 'https://static.npmjs.com/favicon.ico' }
+  ])
+  .send(jid)
 
-// via sendLinkV2 shorthand (rich source objects with search engine)
-await sock.sendLinkV2(
-  jid,
-  'Search results:\n- {{IE_0}}Official docs{{/IE_0}}\n- {{IE_1}}GitHub repo{{/IE_1}}',
-  [
-    { url: 'https://www.npmjs.com/package/@nexustechpro/baileys', displayName: 'Official docs', subtitle: 'npmjs.com' },
-    { url: 'https://github.com/nexustechpro2/baileys', displayName: 'GitHub repo', subtitle: 'github.com' }
-  ],
-  quoted,
-  { headerText: '@nexustechpro/baileys', footer: 'Reference links', searchEngine: 'MAME' }
-)
+// via shorthand
+await sock.sendLink(jid, 'Results:\n🔗 {{IE_0}}link one{{/IE_0}}', ['https://example.com/1'], quoted, { headerText: '📁 Results' })
+await sock.sendLinkV2(jid, 'Search results:', [{ url: 'https://npmjs.com', displayName: 'NPM', subtitle: 'npmjs.com' }], quoted)
 ```
 
 ---
 
-##### Images
+##### Images, Video, Reels
 
 ```javascript
+// via sendMessage
 await sock.sendMessage(jid, {
   aiRich: {
     text: 'Here are some results:',
     images: [
       { url: 'https://example.com/img1.jpg', sourceUrl: 'https://example.com' },
       { url: 'https://example.com/img2.jpg', sourceUrl: 'https://example.com' }
-    ],
-    footer: '_2 images found_'
-  }
-}, { quoted: message })
-```
-
----
-
-##### Reels
-
-```javascript
-await sock.sendMessage(jid, {
-  aiRich: {
-    text: 'Top reels for you:',
-    reels: [
-      {
-        title: 'Creator Name',
-        creator: 'Creator Name',
-        videoUrl: 'https://example.com/reel1.mp4',
-        thumbnailUrl: 'https://example.com/thumb1.jpg',
-        profileIconUrl: 'https://example.com/avatar.jpg',
-        view_count: 12000,
-        likes_count: 800,
-        is_verified: true,
-        reel_source: 'IG'
-      }
     ]
   }
 }, { quoted: message })
+
+// via builder
+await sock.airich()
+  .setTitle('Image Preview')
+  .addImage('https://example.com/image.jpg')
+  .addVideo('https://example.com/clip.mp4')
+  .addReels([{
+    creator: 'Rick Astley',
+    avatar_url: 'https://example.com/avatar.jpg',
+    thumbnail_url: 'https://example.com/thumb.jpg',
+    reels_url: 'https://youtube.com/watch?v=dQw4w9WgXcQ'
+  }])
+  .send(jid)
 ```
 
 ---
 
-##### Multiple Codes
+##### Suggestions, Widgets, Footer Actions
 
 ```javascript
+// via builder
+await sock.airich()
+  .addText('What would you like to do?')
+  .addSuggest(['📥 Download Video', '🎨 Generate Image', '🔍 Web Search'])
+  .addWidget([
+    { label: '📥 Download', tool_call_id: 'dl', kind: 'OTHER', toast: 'Downloading...' },
+    { label: '✅ Confirm', tool_call_id: 'confirm', kind: 'CONFIRM', toast: 'Confirmed!' },
+    { label: '❌ Cancel', tool_call_id: 'cancel', kind: 'CANCEL', toast: 'Cancelled.' }
+  ])
+  .addFooterAction({ cta_text: '🔗 Visit GitHub', cta_type: 'OPEN_URL', cta_url: 'https://github.com/nexustechpro2' })
+  .send(jid)
+```
+
+---
+
+##### Status Indicators
+
+```javascript
+// via builder
+await sock.airich()
+  .addText('Processing your request...')
+  .addThinkingStatus('Searching the web...', 'WEB_SEARCH')
+  .addThinkingStatus('Thinking deeply...', 'THINKING')
+  .addProgressStatus('Almost done — 80%', true)
+  .addProgressStatus('Done!', false)
+  .send(jid)
+
+// Task queue
+await sock.airich()
+  .setTitle('Job Queue')
+  .addTask({ taskId: 'task-1', title: 'Fetch data', subtitle: 'Calling API', status: 'DONE' })
+  .addTask({ taskId: 'task-2', title: 'Process result', status: 'RUNNING' })
+  .addTask({ taskId: 'task-3', title: 'Send response', status: 'PENDING' })
+  .send(jid)
+```
+
+---
+
+##### Dividers & Spacers
+
+```javascript
+await sock.airich()
+  .setTitle('Layout Test')
+  .addText('*Section A*')
+  .addDivider()                  // horizontal line
+  .addText('*Section B*')
+  .addDivider('DOT')             // dotted divider
+  .addText('*Section C*')
+  .addSpacer(3)                  // 3-line gap
+  .addText('*Section D*')
+  .send(jid)
+```
+
+---
+
+##### LaTeX
+
+```javascript
+// via sendMessage
 await sock.sendMessage(jid, {
   aiRich: {
-    texts: ['## Sorting Algorithms', 'Two implementations:'],
-    codes: [
-      { language: 'javascript', code: `const bubble = arr => { /* ... */ }` },
-      { language: 'python', code: `def quicksort(arr):\n    # ...` }
-    ],
-    footer: '_O(n²) vs O(n log n)_'
+    latexText: 'The quadratic formula:',
+    latex: [
+      { latexExpression: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}', url: 'https://example.com/formula.png', width: 400, height: 80 }
+    ]
   }
 }, { quoted: message })
+
+// via builder
+await sock.airich()
+  .addText("Einstein's famous equation:")
+  .addLatex({ expression: 'E = mc^2', imageUrl: 'https://example.com/emc2.png', width: 300, height: 60 })
+  .send(jid)
+
+// via shorthand
+await sock.sendLatex(jid, [
+  { latexExpression: 'E = mc^2', url: 'https://example.com/emc2.png', width: 300, height: 60 }
+], quoted, { text: 'Mass-energy equivalence:' })
+```
+
+> Note: LaTeX requires a pre-rendered image URL. WhatsApp does not render LaTeX client-side.
+
+---
+
+##### Post & Product Cards
+
+```javascript
+await sock.airich()
+  .addPost({
+    title: 'NexusBot v2.2.7 🚀',
+    username: 'nexustechpro2',
+    subtitle: 'GitHub',
+    thumbnail_url: 'https://example.com/thumb.jpg',
+    post_url: 'https://github.com/nexustechpro2',
+    post_caption: 'New release — faster, smarter, better.',
+    source_app: 'instagram',
+    likes_count: 2048,
+    comments_count: 128,
+    is_verified: true
+  })
+  .addProduct({
+    title: 'NexusBot Premium',
+    brand: 'NexusTechPro',
+    price: '$9.99/mo',
+    sale_price: '$4.99/mo',
+    product_url: 'https://github.com/nexustechpro2',
+    image_url: 'https://example.com/product.jpg'
+  })
+  .send(jid)
 ```
 
 ---
 
-##### Composite (mix everything in one message)
+##### Map
 
 ```javascript
+await sock.airich()
+  .addText('Our location:')
+  .addMap([{
+    latitude: 6.5244,
+    longitude: 3.3792,
+    name: 'Lagos, Nigeria',
+    address: 'Lagos Island, Lagos State'
+  }])
+  .send(jid)
+```
+
+---
+
+##### Generating Placeholder
+
+```javascript
+await sock.airich()
+  .addText('Generating your image...')
+  .addGenerating('GENERATING')  // shows a loading placeholder
+  .send(jid)
+```
+
+---
+
+##### Load From / Edit
+
+```javascript
+// Load an existing AIRich message back into the builder for editing
+const r = sock.airich()
+r.loadFrom(receivedMessage.message)
+r.addText('Additional content added!')
+await r.send(jid)
+
+// Edit a sent AIRich message
+const sent = await sock.airich().addText('Original text').send(jid)
+await sock.airich()
+  .addText('Updated text')
+  .sendEdit(jid, sent.key.id)
+```
+
+---
+
+##### Capture & Relay
+
+```javascript
+// Capture a received AIRich message for forwarding
+const captured = sock.captureAiRich(msg.message)
+
+// Relay it to another jid
+if (captured) await sock.relayAiRich(targetJid, captured)
+```
+
+---
+
+##### Full Combo Example
+
+```javascript
+// via sendMessage — everything in one object
 await sock.sendMessage(jid, {
   aiRich: {
     parts: [
@@ -1438,46 +1718,33 @@ await sock.sendMessage(jid, {
   }
 }, { quoted: message })
 
-// via sendRichMessage shorthand
+// via builder — full combo
+await sock.airich()
+  .setTitle('NexusTechPro Bot')
+  .setFooter('Powered by @nexustechpro/baileys v2.2.7')
+  .addText('*Welcome to NexusTechPro!*')
+  .addDivider()
+  .addCode('python', 'print("Hello from NexusTechPro")')
+  .addTable([
+    ['Plan', 'Price', 'Sessions'],
+    ['Basic', 'Free', '1'],
+    ['Pro', '$9/mo', '10'],
+    ['Enterprise', 'Custom', 'Unlimited']
+  ])
+  .addTask({ taskId: 't1', title: 'Bot online', status: 'DONE' })
+  .addMetadata('NexusTechPro • v2.2.7 • 2026')
+  .addSuggest(['View commands', 'Get support', 'Upgrade plan'])
+  .addFooterAction({ cta_text: '📖 View Dashboard', cta_type: 'OPEN_URL', cta_url: 'https://github.com/nexustechpro2' })
+  .addFOAText('_Reply with any message to continue_')
+  .send(jid)
+
+// via shorthand
 await sock.sendRichMessage(jid, {
   text: 'Hello from sendRichMessage!',
   code: 'console.log("works!")',
   language: 'javascript',
   footer: '_NexusTechPro_'
 }, quoted)
-```
-
----
-
-##### LaTeX
-
-```javascript
-await sock.sendMessage(jid, {
-  aiRich: {
-    latexText: 'The quadratic formula:',
-    latex: [
-      { latexExpression: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}', url: '', width: 0, height: 0 }
-    ],
-    footer: '_Math rendering_'
-  }
-}, { quoted: message })
-
-// via shorthand
-await sock.sendLatex(jid, [
-  { latexExpression: 'E = mc^2', url: '', width: 0, height: 0 }
-], quoted, { text: 'Mass-energy equivalence:', footer: '_Einstein_' })
-```
-
----
-
-##### Capture & Relay (forward an AI message)
-
-```javascript
-// Capture a received AI rich message
-const captured = sock.nexusHandler.captureAiRich(message.message)
-
-// Relay it to another jid
-if (captured) await sock.nexusHandler.relayAiRich(jid, captured, quoted)
 ```
 
 ---
@@ -1501,13 +1768,9 @@ if (captured) await sock.nexusHandler.relayAiRich(jid, captured, quoted)
 | `parts` | `Array` | Composite ordered parts array |
 | `header` | `string` | Text prepended before content |
 | `footer` | `string` | Text appended after content |
-| `botJid` | `string` | Custom bot JID (default: `259786046210223@bot`) |
-| `forwardingScore` | `number` | Forward score (default: `2`) |
-| `disclaimerText` | `string` | Disclaimer shown in metadata |
-| `searchEngine` | `string` | Search engine label (default: `MAME`) |
+| `botJid` | `string` | Custom bot JID |
 | `responseId` | `string` | Custom response UUID |
 | `forwarded` | `boolean` | Set `false` to disable forwarded context |
-| `includesUnifiedResponse` | `boolean` | Set `false` to send V1 only |
 
 ---
 
@@ -1536,6 +1799,8 @@ await sock.sendLink(jid, text, links, quoted, { headerText, footer, botJid })
 await sock.sendLinkV2(jid, text, links, quoted, { headerText, footer, searchEngine })
 await sock.sendLatex(jid, expressions, quoted, { text, headerText, footer })
 await sock.sendRichMessage(jid, data, quoted)
+await sock.sendAlbumMessage(jid, items, quoted)
+await sock.sendGroupStatusMessage(jid, content)
 ```
 
 ---
@@ -1890,22 +2155,485 @@ await sock.chatModify({ markRead: false }, jid)
 ## 📢 Newsletter / Channels
 
 ```javascript
-// Create
-await sock.newsletterCreate('Channel Name', { description: 'Description', picture: buffer })
+// ── Create & Manage ───────────────────────────────────────────────────────────
 
-// Update
-await sock.newsletterUpdateMetadata(newsletterJid, { name: 'New Name', description: 'New Desc' })
-await sock.newsletterUpdatePicture(newsletterJid, buffer)
+// Create a channel
+const channel = await sock.newsletterCreate('Channel Name', {
+  description: 'Channel description',
+  picture: buffer  // optional
+})
+console.log(channel.id) // newsletter jid
 
-// React to a message
-await sock.newsletterReactMessage(newsletterJid, messageId, '👍')
+// Fetch channel metadata
+const meta = await sock.newsletterMetadata('invite', 'INVITE_CODE')   // by invite code
+const meta2 = await sock.newsletterMetadata('jid', newsletterJid)     // by jid
 
-// Follow / Unfollow / Mute / Unmute
+// Update channel info
+await sock.newsletterUpdate(newsletterJid, {
+  name: 'New Name',
+  description: 'New description',
+  picture: buffer,   // optional
+  reaction_codes: { codes: ['👍', '❤️', '😂'] }  // optional
+})
+
+// Delete channel
+await sock.newsletterDelete(newsletterJid)
+
+// ── Follow / Unfollow ─────────────────────────────────────────────────────────
+
 await sock.newsletterFollow(newsletterJid)
 await sock.newsletterUnfollow(newsletterJid)
+
+// ── Mute / Unmute ─────────────────────────────────────────────────────────────
+
 await sock.newsletterMute(newsletterJid)
 await sock.newsletterUnmute(newsletterJid)
+
+// Toggle mute with more control
+await sock.toggleNewsletterMuteV2(newsletterJid, true)   // mute
+await sock.toggleNewsletterMuteV2(newsletterJid, false)  // unmute
+
+// ── Sending Messages ─────────────────────────────────────────────────────────
+
+// Send a text message to a channel
+await sock.sendMessage(newsletterJid, { text: 'Hello from the channel!' })
+
+// Send media to a channel
+await sock.sendMessage(newsletterJid, {
+  image: { url: 'https://example.com/image.jpg' },
+  caption: 'Check this out!'
+})
+
+// Or use the newsletter-specific send method
+await sock.newsletterSendMessage(newsletterJid, { text: 'Hello channel!' })
+await sock.newsletterSendMessage(newsletterJid, { image: buffer, caption: 'Photo update' })
+
+// ── React to a Newsletter Message ────────────────────────────────────────────
+
+await sock.newsletterReactMessage(newsletterJid, serverMessageId, '👍')
+
+// ── Fetch Messages ───────────────────────────────────────────────────────────
+
+// Fetch recent messages from a channel
+const messages = await sock.newsletterFetchMessages(
+  newsletterJid,
+  20,        // count (default: 20)
+  undefined, // since — fetch messages after this server_id
+  undefined  // after — fetch messages after this timestamp
+)
+
+// Fetch message updates (reactions, views)
+const updates = await sock.newsletterFetchMessageUpdates(newsletterJid, serverMessageId)
+
+// ── Subscribers ──────────────────────────────────────────────────────────────
+
+// Get subscriber list
+const subscribers = await sock.newsletterSubscribers(newsletterJid)
+// Returns: [{ id, phoneNumber, displayName, username, role, followTime }]
+
+// ── Notification Settings ────────────────────────────────────────────────────
+
+// Control follower activity notifications
+await sock.newsletterUserSetting(newsletterJid, 'FOLLOWER_NOTIFICATIONS', true)   // mute follower activity
+await sock.newsletterUserSetting(newsletterJid, 'FOLLOWER_NOTIFICATIONS', false)  // unmute follower activity
+
+// ── Admin Management ─────────────────────────────────────────────────────────
+
+// Create an admin invite for another user
+const invite = await sock.newsletterAdminCreate(newsletterJid, '1234567890@s.whatsapp.net')
+
+// Revoke an admin invite
+await sock.newsletterAdminRevoke(newsletterJid, '1234567890@s.whatsapp.net')
+
+// Promote a subscriber to admin
+await sock.newsletterPromoteAdmin(newsletterJid, '1234567890@s.whatsapp.net')
+
+// Demote an admin back to subscriber
+await sock.newsletterDemoteAdmin(newsletterJid, '1234567890@s.whatsapp.net')
+
+// ── Groups linked to a Newsletter ────────────────────────────────────────────
+
+// Get groups linked to a newsletter
+const linked = await sock.groupLinkedNewsletters(groupJid)
 ```
+
+---
+
+## 🔧 Builder API
+
+All builders can be used as a fluent chain. Call `.send(jid)` to send, or `.build(jid)` to get the proto message without sending.
+
+### AIRich Builder
+
+```javascript
+const r = sock.airich()           // create a new builder
+r.setTitle('Title')               // shown in message metadata
+r.setFooter('© NexusTechPro')    // shown below content
+r.setBotJid('867051314767696@bot') // custom bot JID
+r.setResponseId('my-id')         // fix response ID (disables auto-refresh)
+r.setContextInfo({ ... })        // custom contextInfo fields
+
+// Content methods — all chainable, all accept { id, replace, insertAt } opts
+r.addText('hello **world**')
+r.addCode('javascript', 'console.log("hi")')
+r.addTable([['Header1', 'Header2'], ['R1C1', 'R1C2']])
+r.addImage('https://example.com/image.jpg')
+r.addVideo('https://example.com/video.mp4')
+r.addReels([{ creator, avatar_url, thumbnail_url, reels_url }])
+r.addPost({ title, username, thumbnail_url, post_url, source_app, likes_count, is_verified })
+r.addProduct({ title, brand, price, sale_price, product_url, image_url })
+r.addSource([{ title, url, favicon }])
+r.addMap([{ latitude, longitude, name, address }])
+r.addWidget(ctas, title)         // ctas: [{ label, tool_call_id, kind, toast }]
+r.addFooterAction({ cta_text, cta_type, cta_url })
+r.addMetadata('small info text')
+r.addFOAText('# Heading\n## Subheading')
+r.addTip('Tip callout text')
+r.addDivider()                   // or addDivider('DOT') for dotted line
+r.addSpacer(2)                   // spacing: number of blank lines
+r.addThinkingStatus('title', 'THINKING') // icons: THINKING | WEB_SEARCH | META_SEARCH
+r.addProgressStatus('title', true)       // true = in progress, false = done
+r.addTask({ taskId, title, subtitle, status })  // status: PENDING | RUNNING | DONE
+r.addLatex({ expression, imageUrl, width, height, fontHeight, padding })
+r.addGenerating('GENERATING')    // image generation placeholder
+r.addInlineImage('url', 'center') // alignment: center | left | right
+r.addSuggest(['Pill 1', 'Pill 2'], false) // false = action row, true = hscroll
+r.addSection(rawSectionObject)   // raw section for advanced use
+r.addEmbeddedScreen(screenObject) // embedded tabbed panel
+
+// Special methods
+r.loadFrom(msg)                  // load existing AIRich message for editing
+await r.send(jid, opts)          // send
+await r.sendEdit(jid, targetId)  // edit a previously sent message
+```
+
+**Named node IDs** — update specific content after adding:
+
+```javascript
+const r = sock.airich()
+r.addText('Loading...', { id: 'status' })
+r.addCode('js', '// placeholder', { id: 'code' })
+
+// Later, replace a specific node by id
+r.addText('Done!', { replace: 'status' })
+r.addCode('js', 'console.log("real code")', { replace: 'code' })
+
+await r.send(jid)
+```
+
+---
+
+### Button Builder
+
+```javascript
+const b = sock.button()
+
+// Header / body / footer
+b.setTitle('Menu')
+b.setSubtitle('Choose an option')
+b.setBody('What would you like to do?')
+b.setFooter('© NexusTechPro')
+
+// Media header (pick one)
+b.setImage('https://example.com/image.jpg')
+b.setVideo('https://example.com/video.mp4')
+b.setDocument('https://example.com/file.pdf', 'file.pdf')
+b.setLocation(6.5244, 3.3792, 'Lagos')
+
+// Native-flow buttons (chainable)
+b.reply('Quick Reply', 'reply_id')
+b.url('Visit Website', 'https://nexustechpro.com')
+b.call('Call Us', '+2341234567890')
+b.copy('Copy Code', 'NEXUS2025')
+b.openWebview('Open App', 'https://app.nexustechpro.com')
+b.catalog('View Catalog')
+b.flow('Start Flow', 'flow_id_here')
+b.remind('Set Reminder')
+b.cancelReminder('Cancel Reminder')
+b.address('Share Address')
+b.sendLocation('Share Location')
+b.reviewAndPay('Review & Pay')
+b.reviewOrder('Review Order')
+b.orderDetails('Order Details')
+b.paymentStatus('Payment Status')
+b.transactionDetails('Transaction Details')
+b.select('Choose Option', [{ title: 'Section', rows: [{ title: 'Option 1', id: 'opt1' }] }])
+
+// Bloks widget (advanced UI with checkboxes, inputs etc)
+b.setBloksWidget([{ __type__: 'Column', id: 'root', children: [{ __type__: 'Text', text: 'Hello' }] }])
+
+// Message-level params
+b.setLimitedTimeOffer(Date.now() + 3600000)
+b.setBottomSheet({ title: 'Select' })
+b.setTapTargetConfiguration({ dismissible: true })
+
+// Legacy buttons (mode: 'legacy')
+b.legacyButton('Button 1', 'btn1_id')
+b.legacyButton('Button 2', 'btn2_id')
+
+// Template buttons (mode: 'template')
+b.templateReply('Quick Reply', 'reply_id')
+b.templateUrl('Visit', 'https://nexustechpro.com')
+b.templateCall('Call', '+2341234567890')
+
+// Convert to a carousel card
+const card = b.toCard()
+
+await b.send(jid)
+```
+
+---
+
+### Carousel Builder
+
+```javascript
+const c = sock.carousel()
+
+c.setCaption('Our Products')
+c.setFooter('Powered by NexusTechPro')
+c.setCardType('HSCROLL_CARDS') // 'HSCROLL_CARDS' (default) | 'ALBUM_IMAGE'
+
+// Add cards — pass a Button builder instance or a raw card object
+c.card(sock.button().setBody('Card 1').reply('Select', 'card1').url('Learn More', 'https://example.com'))
+c.card(sock.button().setImage('https://example.com/img.jpg').setBody('Card 2').reply('Select', 'card2'))
+
+// Max 10 cards
+await c.send(jid)
+```
+
+---
+
+### Album Builder
+
+```javascript
+const a = sock.album()
+
+// Add items — URLs, Buffers, or file paths
+a.image('https://example.com/1.jpg', 'Caption for photo 1')
+a.image(buffer, 'Caption for photo 2')
+a.video('https://example.com/video.mp4', 'Caption for video')
+a.add([   // add multiple at once
+  { image: { url: 'https://example.com/3.jpg' }, caption: 'Photo 3' },
+  { video: { url: 'https://example.com/4.mp4' }, caption: 'Video 2' }
+])
+
+a.setDelay(1500) // ms between each item send (default: 1500)
+
+// Requires at least 2 items
+await a.send(jid)
+```
+
+---
+
+### Poll Builder
+
+```javascript
+const p = sock.poll()
+
+p.name('What is your favorite color?')
+p.options(['Red', 'Blue', 'Green', 'Yellow'])
+p.addOption('Purple')             // add one more
+p.multiSelect(2)                  // allow selecting up to 2 (0 = unlimited)
+p.hideVoter()                     // hide who voted
+p.announcement()                  // for announcement groups
+
+// Quiz mode
+p.quiz('Blue')                    // marks as quiz with correct answer
+
+// Timed poll
+p.setEndTime(Math.floor(Date.now() / 1000) + 3600) // ends in 1 hour
+p.hideParticipantName()           // hide voter names
+p.allowAddOption()                // allow participants to add options
+
+await p.send(jid)
+```
+
+---
+
+### Event Builder
+
+```javascript
+const e = sock.event()
+
+e.setName('NexusTech Conference 2026')
+e.setDescription('Annual developer meetup')
+e.setLocation({ degreesLatitude: 6.5244, degreesLongitude: 3.3792, name: 'Lagos, Nigeria' })
+e.setJoinLink('https://meet.example.com/nexusconf')
+e.setStartTime(Math.floor(Date.now() / 1000) + 86400)
+e.setEndTime(Math.floor(Date.now() / 1000) + 172800)
+e.setCanceled(false)
+e.setReminder(3600)               // remind 1 hour before (sets hasReminder + reminderOffsetSec)
+e.setScheduledCall(true)          // marks as a scheduled call event
+
+await e.send(jid)
+```
+
+---
+
+### Payment Builder
+
+```javascript
+const pay = sock.payment()
+
+pay.setCurrency('NGN')
+pay.setAmount(10000000)           // amount × 1000
+pay.setFrom('1234567890@s.whatsapp.net')
+pay.setNote('Payment for order #123')
+pay.setExpiry(Date.now() + 86400000)
+
+await pay.send(jid)
+```
+
+---
+
+### Order Builder
+
+```javascript
+const ord = sock.order()
+
+ord.from({
+  orderId: 'ORDER_001',
+  itemCount: 3,
+  totalAmount1000: 45000000,
+  totalCurrencyCode: 'NGN',
+  orderTitle: 'My Order',
+  message: 'Thank you for your order',
+  thumbnail: 'https://example.com/product.jpg'
+})
+
+await ord.send(jid)
+```
+
+---
+
+## 🛠 Utility Methods
+
+```javascript
+// Refresh stale contacts (triggers WA to re-push contact data)
+await sock.requestContactRefresh(['1234567890@s.whatsapp.net', '0987654321@s.whatsapp.net'])
+
+// Fetch message history on demand
+await sock.fetchMessageHistory(50, oldestMessageKey, oldestMessageTimestamp)
+
+// Request a placeholder message to be resent (for unavailable encrypted messages)
+await sock.requestPlaceholderResend(messageKey)
+
+// Capture an AIRich message for forwarding
+const captured = sock.captureAiRich(msg.message)
+// { submessages, sections, contextInfo, messageType }
+
+// Relay a captured AIRich message to another jid
+if (captured) await sock.relayAiRich(targetJid, captured)
+```
+
+---
+
+## 📦 Exported Utilities
+
+Everything exported from `@nexustechpro/baileys` that you can import directly:
+
+```javascript
+import {
+  // Connection
+  makeWASocket,
+  useMultiFileAuthState,
+  useKeyvAuthState,
+  makeCacheableSignalKeyStore,
+  Browsers,
+  DisconnectReason,
+
+  // Message generation
+  generateWAMessage,
+  generateWAMessageFromContent,
+  generateWAMessageContent,
+  generateMessageIDV2,
+
+  // Media
+  downloadMediaMessage,
+  downloadContentFromMessage,
+  prepareWAMessageMedia,
+
+  // Message utils
+  getContentType,
+  normalizeMessageContent,
+  extractMessageContent,
+  getAggregateVotesInPollMessage,
+
+  // JID utils
+  jidDecode,
+  jidNormalizedUser,
+  areJidsSameUser,
+  isJidGroup,
+  isJidNewsletterGroup,
+  isJidUser,
+  isLidUser,
+  isJidBroadcast,
+  isJidStatusBroadcast,
+
+  // Types / Enums
+  WAMessageStubType,
+  WAMessageStatus,
+  WAMessageAddressingMode,
+  resolveStubType,         // resolveStubType(stubType) → name string
+  WA_STUB_TYPE_NAMES,      // { 196: 'SUPPORT_AI_EDUCATION', 225: 'SCHEDULED_MESSAGE_CREATED', ... }
+  AIProvenanceType,        // { NONE: 0, CREATED_WITH_GEN_AI: 1, EDITED_WITH_GEN_AI: 2 }
+  DeviceCapabilityLevel,   // { NONE: 0, INFRA: 1, FULL: 2 }
+
+  // Rich message helpers
+  tokenizeCode,            // tokenizeCode(code, language) → { codeBlocks, unified_codeBlock }
+  extractIE,               // extractIE(text, extraEntities?) → { text, inline_entities }
+  waitAllPromises,         // deep async resolver
+  generateVerificationMetadata, // bot signature metadata
+
+  // Status checker
+  checkStatusWA,
+} from '@nexustechpro/baileys'
+```
+
+---
+
+## 📡 Events Reference
+
+| Event | Fields | Description |
+|-------|--------|-------------|
+| `connection.update` | `connection`, `qr`, `lastDisconnect`, `isNewLogin` | Connection state changed |
+| `creds.update` | partial `AuthenticationCreds` | Auth credentials updated |
+| `messaging-history.set` | `chats`, `contacts`, `messages`, `syncType`, `isLatest` | Initial history loaded |
+| `messages.upsert` | `messages[]`, `type` | New message(s) received |
+| `messages.update` | `[{ key, update }]` | Message status/content updated |
+| `messages.delete` | `keys[]` or `{ jid, all }` | Message(s) deleted |
+| `messages.reaction` | `[{ reaction, key }]` | Reaction added/removed |
+| `messages.media-update` | `[{ key, media?, error? }]` | Media upload status updated |
+| `message-receipt.update` | `[{ key, receipt }]` | Read/delivered receipts |
+| `chats.set` | `{ chats[], isLatest }` | Initial chat list loaded |
+| `chats.upsert` | `Chat[]` | New chat(s) appeared |
+| `chats.update` | `Partial<Chat>[]` | Chat metadata updated |
+| `chats.delete` | `string[]` | Chat(s) deleted |
+| `contacts.set` | `{ contacts[] }` | Initial contacts loaded |
+| `contacts.upsert` | `Contact[]` | New contact(s) added |
+| `contacts.update` | `Partial<Contact>[]` | Contact info updated |
+| `groups.upsert` | `GroupMetadata[]` | New group created/joined |
+| `groups.update` | `Partial<GroupMetadata>[]` | Group metadata changed |
+| `group-participants.update` | `{ id, author, authorPn, participants, action }` | Member added/removed/promoted/demoted |
+| `blocklist.set` | `{ blocklist[] }` | Initial blocklist loaded |
+| `blocklist.update` | `{ blocklist[], type }` | Block/unblock event |
+| `presence.update` | `{ id, presences }` | User presence changed |
+| `call` | `WACallEvent[]` | Incoming/outgoing call |
+| `labels.edit` | `Label` | Label created/updated |
+| `labels.association` | `[{ association, type }]` | Message/chat label assigned/removed |
+| `settings.update` | `{ setting, value }` | Account setting changed (theme, AI thread rename, device capabilities, etc.) |
+
+**`group-participants.update` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Group JID |
+| `author` | `string` | JID of who performed the action |
+| `authorPn` | `string` | Phone number of the actor (PN format) |
+| `participants` | `string[]` | JIDs of affected participants |
+| `action` | `string` | `add` \| `remove` \| `promote` \| `demote` |
+
+---
 
 ## 🤖 Meta AI Messages
 
@@ -1926,33 +2654,6 @@ sock.ev.on('messages.upsert', async ({ messages }) => {
 ```
 
 If decryption fails (e.g. missing message secret), the message is gracefully NACKed and logged — it won't crash your session.
-
----
-
-## 📡 Events Reference
-
-| Event | Trigger |
-|-------|---------|
-| `connection.update` | Connection state changed |
-| `creds.update` | Auth credentials updated |
-| `messages.upsert` | New message(s) received |
-| `messages.update` | Message status/content updated |
-| `messages.delete` | Message(s) deleted |
-| `message-receipt.update` | Read/delivered receipts |
-| `chats.set` | Initial chat list loaded |
-| `chats.upsert` | New chat(s) appeared |
-| `chats.update` | Chat metadata updated |
-| `chats.delete` | Chat(s) deleted |
-| `contacts.set` | Initial contacts loaded |
-| `contacts.upsert` | New contact(s) added |
-| `contacts.update` | Contact info updated |
-| `groups.upsert` | New group created/joined |
-| `groups.update` | Group metadata changed |
-| `group-participants.update` | Member added/removed/promoted |
-| `presence.update` | User presence changed |
-| `call` | Incoming call |
-| `blocklist.set` | Initial blocklist loaded |
-| `blocklist.update` | Block/unblock event |
 
 ---
 
