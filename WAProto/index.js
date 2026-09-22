@@ -1,33 +1,88 @@
-import { fetchProtoBundle } from './fetcher.js'
-import { parseAndWriteProto } from './parser.js'
-import { generateTable, _reloadProto } from './WAProtoCompile.js'
+import { existsSync, unlinkSync, readFileSync } from 'fs'
+import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { existsSync } from 'fs'
+import logger from '../lib/Utils/logger.js'
+import { fetchProtoBundle } from './fetcher.js'
+import { generateTable, _reloadProto } from './WAProtoCompile.js'
+import { parseBundle } from './parser.js'
 
-const PROTO_FILE = fileURLToPath(new URL('./WAProto.proto', import.meta.url))
-const TABLE_FILE = fileURLToPath(new URL('./WAProto.json', import.meta.url))
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const PROTO_FILE = join(__dirname, 'WAProto.proto')
+const TABLE_FILE = join(__dirname, 'WAProto.json')
 
-// First run: block until proto and table are generated
-if (!existsSync(PROTO_FILE) || !existsSync(TABLE_FILE)) {
-    const { bundle, version } = await fetchProtoBundle()
-    if (bundle) {
-        await parseAndWriteProto(bundle, version)
-        await generateTable(PROTO_FILE, TABLE_FILE)
-        _reloadProto()
-    }
+const log = msg => logger.info(msg)
+const err = msg => logger.error(msg)
+
+const isJsonValid = () => {
+    try {
+        const { m, t } = JSON.parse(readFileSync(TABLE_FILE, 'utf8'))
+        return Array.isArray(m) && m.length > 0 && typeof t === 'object' && Object.keys(t).length > 0
+    } catch { return false }
 }
 
-// Background: keep proto in sync with WA Web updates
-; (async () => {
-    try {
-        const { changed, bundle, version } = await fetchProtoBundle()
-        if (changed && bundle) {
-            await parseAndWriteProto(bundle, version)
-            await generateTable(PROTO_FILE, TABLE_FILE)
-            _reloadProto()
-        }
-    } catch { }
-})()
+const del = (...files) => { for (const f of files) { try { if (existsSync(f)) unlinkSync(f) } catch { } } }
 
+async function regenerateFromProto() {
+    log('Regenerating WAProto.json from existing WAProto.proto...')
+    await generateTable(PROTO_FILE, TABLE_FILE)
+    _reloadProto()
+    log('Regenerated successfully')
+}
+
+async function refetch() {
+    log('Fetching proto bundle from WhatsApp Web...')
+    const { bundle, version } = await fetchProtoBundle()
+    if (!bundle) throw new Error('fetchProtoBundle returned no bundle')
+    const protoText = parseBundle(bundle, version)
+    const { writeFileSync } = await import('fs')
+    const tmp = PROTO_FILE + '.tmp'
+    writeFileSync(tmp, protoText, 'utf8')
+    const { renameSync } = await import('fs')
+    renameSync(tmp, PROTO_FILE)
+    await generateTable(PROTO_FILE, TABLE_FILE)
+    _reloadProto()
+    log(`Fetched and compiled — WA version ${version}`)
+}
+
+async function boot() {
+    const hasProto = existsSync(PROTO_FILE)
+    const hasJson = existsSync(TABLE_FILE)
+
+    if (hasProto && hasJson) {
+        if (isJsonValid()) { _reloadProto(); return }
+        err('WAProto.json is invalid or corrupt — regenerating from proto...')
+        del(TABLE_FILE)
+        try { await regenerateFromProto(); return } catch (e) {
+            err(`Regeneration failed: ${e.message} — refetching from WA Web...`)
+            del(PROTO_FILE, TABLE_FILE)
+            await refetch()
+        }
+        return
+    }
+
+    if (hasProto && !hasJson) {
+        log('WAProto.json missing — generating from existing proto...')
+        try { await regenerateFromProto(); return } catch (e) {
+            err(`Generation failed: ${e.message} — refetching from WA Web...`)
+            del(PROTO_FILE, TABLE_FILE)
+            await refetch()
+        }
+        return
+    }
+
+    if (hasJson && !hasProto) {
+        err('WAProto.proto missing but WAProto.json exists — cannot trust JSON, refetching...')
+        del(TABLE_FILE)
+        await refetch()
+        return
+    }
+
+    log('No proto files found — fetching from WA Web...')
+    await refetch()
+}
+
+await boot()
+
+export { proto, codec, generateTable, _reloadProto } from './WAProtoCompile.js'
 export { getWAVersion } from './fetcher.js'
-export { proto, codec, generateTable, proto as default } from './WAProtoCompile.js'
+export { default } from './WAProtoCompile.js'
