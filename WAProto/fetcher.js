@@ -14,39 +14,23 @@ const WA_URL = 'https://web.whatsapp.com'
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
 
 const SCRIPT_HEADERS = {
-    'User-Agent': UA,
-    'Accept': '*/*',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Cache-Control': 'no-cache',
-    'Referer': WA_URL,
-    'Sec-Fetch-Dest': 'script',
-    'Sec-Fetch-Mode': 'no-cors',
-    'Sec-Fetch-Site': 'same-origin',
+    'User-Agent': UA, 'Accept': '*/*', 'Accept-Language': 'en-US,en;q=0.9',
+    'Cache-Control': 'no-cache', 'Referer': WA_URL,
+    'Sec-Fetch-Dest': 'script', 'Sec-Fetch-Mode': 'no-cors', 'Sec-Fetch-Site': 'same-origin',
 }
 
 const PAGE_HEADERS = {
-    'User-Agent': UA,
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Cache-Control': 'no-cache',
-    'Sec-Fetch-Dest': 'document',
-    'Sec-Fetch-Mode': 'navigate',
-    'Sec-Fetch-Site': 'none',
-    'Sec-Fetch-User': '?1',
-    'Upgrade-Insecure-Requests': '1',
+    'User-Agent': UA, 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9', 'Cache-Control': 'no-cache',
+    'Sec-Fetch-Dest': 'document', 'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none', 'Sec-Fetch-User': '?1', 'Upgrade-Insecure-Requests': '1',
 }
 
 const agent = new Agent({ connect: { family: 4 } })
 const TRANSIENT_ERRORS = new Set(['ETIMEDOUT', 'ECONNREFUSED', 'ENETUNREACH', 'ENOTFOUND', 'EAI_AGAIN'])
 
-function readCache() {
-    if (!existsSync(CACHE_FILE)) return {}
-    try { return JSON.parse(readFileSync(CACHE_FILE, 'utf8')) } catch { return {} }
-}
-
-function writeCache(data) {
-    writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2), 'utf8')
-}
+const readCache = () => { try { return existsSync(CACHE_FILE) ? JSON.parse(readFileSync(CACHE_FILE, 'utf8')) : {} } catch { return {} } }
+const writeCache = (data) => writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2), 'utf8')
 
 async function withRetry(fn, retries = 3) {
     let delay = 1000
@@ -59,13 +43,11 @@ async function withRetry(fn, retries = 3) {
     }
 }
 
-async function fetchText(url, headers) {
-    return withRetry(async () => {
-        const res = await fetch(url, { method: 'GET', headers, dispatcher: agent })
-        if (!res.ok) throw new Error(`[WAProto] HTTP ${res.status} fetching ${url}`)
-        return res.text()
-    })
-}
+const fetchText = (url, headers) => withRetry(async () => {
+    const res = await fetch(url, { method: 'GET', headers, dispatcher: agent })
+    if (!res.ok) throw new Error(`[WAProto] HTTP ${res.status} fetching ${url}`)
+    return res.text()
+})
 
 async function fetchClientRevision() {
     const text = await fetchText(SW_URL, SCRIPT_HEADERS)
@@ -83,12 +65,13 @@ async function fetchBundleUrls() {
 }
 
 async function fetchCombinedBundle(bundleUrls) {
-    const results = await Promise.allSettled(
-        bundleUrls.map(url => fetchText(url, SCRIPT_HEADERS))
-    )
-    const chunks = results
-        .filter(r => r.status === 'fulfilled' && r.value.includes('internalSpec'))
-        .map(r => r.value)
+    const chunks = []
+    for (const url of bundleUrls) {
+        try {
+            const text = await fetchText(url, SCRIPT_HEADERS)
+            if (text.includes('internalSpec')) chunks.push(text)
+        } catch { }
+    }
     if (!chunks.length) throw new Error('[WAProto] No proto bundles found in WA Web JS files')
     return chunks.join('\n')
 }
@@ -96,20 +79,11 @@ async function fetchCombinedBundle(bundleUrls) {
 export async function fetchProtoBundle() {
     const cache = readCache()
     const version = await fetchClientRevision()
-
-    if (cache.version === version && existsSync(PROTO_FILE)) {
-        return { changed: false, bundle: null, version }
-    }
-
+    if (cache.version === version && existsSync(PROTO_FILE)) return { changed: false, bundle: null, version }
     const bundleUrls = await fetchBundleUrls()
     let bundle = await fetchCombinedBundle(bundleUrls)
     const hash = createHash('sha256').update(bundle).digest('hex')
-
-    if (cache.hash === hash) {
-        writeCache({ version, hash })
-        return { changed: false, bundle: null, version }
-    }
-
+    if (cache.hash === hash) { writeCache({ version, hash }); return { changed: false, bundle: null, version } }
     writeCache({ version, hash })
     const result = { changed: true, bundle, version }
     bundle = null
