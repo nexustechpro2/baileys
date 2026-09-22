@@ -1,15 +1,14 @@
 import { createRequire } from 'module'
-import { writeFileSync } from 'fs'
+import { writeFileSync, renameSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import logger from '../lib/Utils/logger.js'
 
 const require = createRequire(import.meta.url)
 const acorn = require('acorn')
 const walk = require('acorn-walk')
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const PROTO_FILE = join(__dirname, 'WAProto.proto')
-
 const addPrefix = (lines, prefix) => lines.map(l => prefix + l)
 
 function extractAllExpressions(node) {
@@ -37,22 +36,22 @@ function getNumericEnumValue(node) {
 }
 
 function parseBundleSources(sources) {
-    return sources.flatMap((source, idx) => {
-        const patched = source.replaceAll('LimitSharing$Trigger', 'LimitSharing$TriggerType')
-        const opts = { ecmaVersion: 'latest', allowHashBang: true }
-        try { return acorn.parse(patched, { ...opts, sourceType: 'script' }).body }
+    const nodes = []
+    const opts = { ecmaVersion: 'latest', allowHashBang: true }
+    for (let i = 0; i < sources.length; i++) {
+        const patched = sources[i].replaceAll('LimitSharing$Trigger', 'LimitSharing$TriggerType')
+        sources[i] = null
+        try { nodes.push(...acorn.parse(patched, { ...opts, sourceType: 'script' }).body) }
         catch {
-            try { return acorn.parse(patched, { ...opts, sourceType: 'module' }).body }
-            catch (e) { process.stderr.write(`[WAProto] Skipping bundle ${idx + 1}: ${e.message}\n`); return [] }
+            try { nodes.push(...acorn.parse(patched, { ...opts, sourceType: 'module' }).body) }
+            catch (e) { logger.warn(`[WAProto] Skipping bundle ${i + 1}: ${e.message}`) }
         }
-    })
+    }
+    return nodes
 }
 
 function filterProtoModules(allNodes) {
-    return allNodes.filter(m => {
-        const expressions = extractAllExpressions(m)
-        return expressions.find(e => e?.left?.property?.name === 'internalSpec')
-    })
+    return allNodes.filter(m => extractAllExpressions(m).find(e => e?.left?.property?.name === 'internalSpec'))
 }
 
 export function extractSchema(bundleSources) {
@@ -66,7 +65,6 @@ export function extractSchema(bundleSources) {
     const modulesInfo = {}
     const moduleIndentationMap = {}
 
-    // pass 1: cross-refs
     modules.forEach(module => {
         const modName = module?.expression?.arguments?.[0]?.value ?? `__anon_${Math.random()}`
         modulesInfo[modName] = { crossRefs: [] }
@@ -80,7 +78,6 @@ export function extractSchema(bundleSources) {
         })
     })
 
-    // pass 2: identifiers + enum aliases
     for (const mod of modules) {
         const modName = mod?.expression?.arguments?.[0]?.value
         const modInfo = modulesInfo[modName]
@@ -146,7 +143,6 @@ export function extractSchema(bundleSources) {
         })
     }
 
-    // pass 3: internalSpec members
     const findByAlias = (identifiers, alias) => Object.values(identifiers).find(item => item.alias === alias)
 
     for (const mod of modules) {
@@ -183,8 +179,7 @@ export function extractSchema(bundleSources) {
                             if (type === 'map' && elements[2]?.type === 'ArrayExpression') {
                                 let typeStr = 'map<'
                                 elements[2].elements.forEach((el, i) => {
-                                    typeStr += el?.property?.name
-                                        ? el.property.name.toLowerCase()
+                                    typeStr += el?.property?.name ? el.property.name.toLowerCase()
                                         : (findByAlias(modInfo.identifiers, el.name)?.name ?? el.name)
                                     if (i < elements[2].elements.length - 1) typeStr += ', '
                                 })
@@ -217,8 +212,7 @@ export function extractSchema(bundleSources) {
                 constraints.forEach(c => {
                     if (c.key.name === '__oneofs__' && c.value.type === 'ObjectExpression') {
                         const oneofs = c.value.properties.map(p => ({
-                            name: p.key.name,
-                            type: '__oneof__',
+                            name: p.key.name, type: '__oneof__',
                             members: p.value.elements.map(e => {
                                 const idx = members.findIndex(m => m.name === e.value)
                                 const member = members[idx]
@@ -243,17 +237,14 @@ export function generateProto3(modulesInfo, moduleIndentationMap, version) {
     const unnest = n => n.split('$').slice(-1)[0]
 
     const stringifyMember = (info, completeFlags, parentName) => {
-        if (info.type === '__oneof__') {
+        if (info.type === '__oneof__')
             return [`oneof ${info.name} {`, ...addPrefix([].concat(...info.members.map(m => stringifyMember(m, false))), indent), '}']
-        }
         if (info.flags.includes('packed')) { info.flags.splice(info.flags.indexOf('packed'), 1); info.packed = ' [packed=true]' }
         const reqIdx = info.flags.indexOf('required'); if (reqIdx !== -1) info.flags[reqIdx] = 'optional'
         if (completeFlags && !info.flags.length && info.type && !info.type.includes('map')) info.flags.push('optional')
-
         const indentation = moduleIndentationMap[info.type]?.indentation
         let typeName = unnest(info.type || 'bytes')
         if (indentation !== parentName && indentation) typeName = `${indentation.replaceAll('$', '.')}.${typeName}`
-
         return [`${info.flags.join(' ')}${info.flags.length ? ' ' : ''}${typeName} ${info.name} = ${info.id}${info.packed || ''};`]
     }
 
@@ -293,22 +284,28 @@ export function generateProto3(modulesInfo, moduleIndentationMap, version) {
             return [`// Unknown entity ${v.name}`]
         }
 
-        for (const v of Object.values(modInfo.identifiers)) {
+        for (const v of Object.values(modInfo.identifiers))
             if (!moduleIndentationMap[v.name]?.indentation?.length)
                 decodedProtoMap[v.name] = getEntity(v).join('\n')
-        }
     }
 
     const body = Object.keys(decodedProtoMap).sort().map(k => decodedProtoMap[k]).join('\n')
     return `syntax = "proto3";\npackage proto;\n${version ? `\n/// WhatsApp Version: ${version}\n` : ''}\n${body}`
 }
 
-export async function parseAndWriteProto(bundle, version) {
+export function parseBundle(bundle, version) {
     const sources = Array.isArray(bundle) ? bundle : [bundle]
     const { modulesInfo, moduleIndentationMap } = extractSchema(sources)
-    const protoText = generateProto3(modulesInfo, moduleIndentationMap, version)
+    return generateProto3(modulesInfo, moduleIndentationMap, version)
+}
+
+export async function parseAndWriteProto(bundle, version, outPath = PROTO_FILE) {
+    const protoText = parseBundle(bundle, version)
+    const tmp = outPath + '.tmp'
+    writeFileSync(tmp, protoText, 'utf8')
+    renameSync(tmp, outPath)
     const unknown = [...protoText.matchAll(/\/\/ Unknown entity (.+)/g)].map(m => m[1])
-    writeFileSync(PROTO_FILE, protoText, 'utf8')
+    if (unknown.length) logger.warn(`[WAProto] ${unknown.length} unknown entities: ${unknown.join(', ')}`)
     return {
         messageCount: Object.values(modulesInfo).reduce((s, m) => s + Object.keys(m.identifiers || {}).length, 0),
         unknownCount: unknown.length,
