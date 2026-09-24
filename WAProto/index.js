@@ -86,3 +86,8 @@ await boot()
 export { proto, codec, generateTable, _reloadProto } from './WAProtoCompile.js'
 export { getWAVersion } from './fetcher.js'
 export { default } from './WAProtoCompile.js'
+export const MESSAGE_FIELD_KEYS = new Set(
+    (JSON.parse(readFileSync(TABLE_FILE, 'utf8')).t['proto.Message'] || [])
+        .map(f => f[0])
+        .filter(name => /Message(?:V\d+)?$/.test(name))
+)
