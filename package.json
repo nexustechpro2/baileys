@@ -3,7 +3,7 @@
   "name": "@nexustechpro/baileys",
   "type": "module",
   "version": "2.2.8",
-  "description": "Advanced WhatsApp Web API built on Baileys \u2014 interactive messages, buttons, carousels, products, events, payments, polls, albums, sticker packs and more.",
+  "description": "Advanced WhatsApp Web API built on Baileys — interactive messages, buttons, carousels, products, events, payments, polls, albums, sticker packs and more.",
   "keywords": [
     "baileys",
     "baileys-mod",
@@ -165,6 +165,7 @@
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "tsc-esm-fix": "^3.1.2",
+    "tsup": "^8.5.1",
     "tsx": "^4.20.3",
     "typedoc": "^0.27.9",
     "typedoc-plugin-markdown": "4.4.2",

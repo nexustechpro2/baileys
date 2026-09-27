@@ -78,6 +78,8 @@
   - [Usernames](#usernames)
 - [Check Number Status](#ban-checker)
 - [Privacy Controls](#-privacy-controls)
+- [Reporting](#reporting)
+- [Reporting Info Store](#reporting-info-store)
 - [Chat Operations](#-chat-operations)
 - [Newsletter / Channels](#-newsletter--channels)
 - [Builder API](#-builder-api)
@@ -85,6 +87,10 @@
   - [Button Builder](#button-builder)
   - [Carousel Builder](#carousel-builder)
   - [Album Builder](#album-builder)
+  - [VerticalAlbum Builder](#verticalalbum-builder)
+  - [GridImage Builder](#gridimage-builder)
+  - [VideoGrid Builder](#videogrid-builder)
+  - [A2UI Builder](#a2ui-builder)
   - [Poll Builder](#poll-builder)
   - [Event Builder](#event-builder)
   - [Payment Builder](#payment-builder)
@@ -496,8 +502,13 @@ Every key you can pass to `sock.sendMessage`:
 | `orderMessage` | Order message |
 | `eventMessage` | Event / calendar invite |
 | `stickerPack` | Sticker pack |
+| `verticalAlbumMessage` | Vertical stacked media album (AIRich format) |
+| `gridImageMessage` | Image grid (GRID_IMAGE protocol type) |
+| `videoGridMessage` | Video grid (GenAIVideoPrimitive grid) |
+| `a2uiMessage` | A2UI bloksWidget interactive message |
 | `statusMentionMessage` | Mention someone in a status |
 | `pollResultMessage` | Poll result snapshot |
+| `deliveryMode` | Controls which devices receive the message — see Delivery Mode section |
 
 ---
 
@@ -522,6 +533,45 @@ await sock.sendMessage(jid, {
 // AI-generated label
 await sock.sendMessage(jid, { text: 'AI response here', ai: true })
 ```
+
+### Delivery Mode
+
+Control which devices receive your message using the `deliveryMode` option. By default every device gets the message (`toAll`).
+
+| Mode | Your Main | Your Companions | Recipient Main | Recipient Companions |
+|------|-----------|-----------------|----------------|----------------------|
+| `toAll` | ✅ | ✅ | ✅ | ✅ |
+| `toMainOnly` | ✅ | ❌ | ✅ | ❌ |
+| `toRecipientMain` | ✅ | ✅ | ✅ | ❌ |
+| `toSelf` | ✅ | ✅ | ❌ | ❌ |
+| `toRecipient` | ❌ | ❌ | ✅ | ✅ |
+| `toSelfMain` | ✅ | ❌ | ❌ | ❌ |
+| `toRecipientMainOnly` | ❌ | ❌ | ✅ | ❌ |
+
+```javascript
+// Everyone gets it (default)
+await sock.sendMessage(jid, { text: 'Hello!' }, { deliveryMode: 'toAll' })
+
+// Main phones only — no companion devices on either side
+await sock.sendMessage(jid, { text: 'Hello!' }, { deliveryMode: 'toMainOnly' })
+
+// Recipient's main phone only — your companions still get it
+await sock.sendMessage(jid, { text: 'Hello!' }, { deliveryMode: 'toRecipientMain' })
+
+// Your devices only — recipient gets nothing
+await sock.sendMessage(jid, { text: 'Hello!' }, { deliveryMode: 'toSelf' })
+
+// Recipient all devices — you see nothing
+await sock.sendMessage(jid, { text: 'Hello!' }, { deliveryMode: 'toRecipient' })
+
+// Your main phone only — nothing else
+await sock.sendMessage(jid, { text: 'Hello!' }, { deliveryMode: 'toSelfMain' })
+
+// Recipient main phone only — you see nothing
+await sock.sendMessage(jid, { text: 'Hello!' }, { deliveryMode: 'toRecipientMainOnly' })
+```
+
+> `deliveryMode` is optional — omitting it defaults to `toAll` and behaves exactly like normal.
 
 ### Media Messages
 
@@ -1663,10 +1713,26 @@ await sock.airich()
 ##### Generating Placeholder
 
 ```javascript
+// Imagine placeholder (generation state)
 await sock.airich()
   .addText('Generating your image...')
-  .addGenerating('GENERATING')  // shows a loading placeholder
+  .addImagine({ mediaType: 'image', status: 'GENERATING', estimatedMs: 5000 })
   .send(jid)
+
+// Standalone generation message with itemId for later edit
+const { msg, responseId, itemId } = await sock.sendRichGeneration(jid, {
+  text: 'Generating...',
+  mediaType: 'video',
+  status: 'GENERATING',
+  estimatedMs: 8000
+})
+
+// Later — edit that same message with the finished result
+await sock.airich()
+  .setResponseId(responseId)
+  .addText('Here is your video!')
+  .addImagine({ mediaType: 'video', url: 'https://example.com/result.mp4', status: 'READY' })
+  .sendEdit(jid, msg.key.id)
 ```
 
 ---
@@ -1771,6 +1837,8 @@ await sock.sendRichMessage(jid, {
 | `botJid` | `string` | Custom bot JID |
 | `responseId` | `string` | Custom response UUID |
 | `forwarded` | `boolean` | Set `false` to disable forwarded context |
+| `rawSections` | `Array` | Raw unified response sections (advanced) |
+| `rawSubmessages` | `Array` | Matching submessages for `rawSections` |
 
 ---
 
@@ -1801,6 +1869,13 @@ await sock.sendLatex(jid, expressions, quoted, { text, headerText, footer })
 await sock.sendRichMessage(jid, data, quoted)
 await sock.sendAlbumMessage(jid, items, quoted)
 await sock.sendGroupStatusMessage(jid, content)
+await sock.sendRichGeneration(jid, { text, mediaType, status, estimatedMs })
+await sock.sendUnifiedResponse(jid, sections, submessages, options)
+await sock.sendVerticalAlbumMessage(jid, { items: [...] })
+await sock.sendGridImageMessage(jid, { imageUrls: [...] })
+await sock.sendVideoGridMessage(jid, { videos: [...] })
+await sock.sendA2UIMessage(jid, { bloksWidget, nativeFlowMessage })
+await sock.sendA2UICommandMenu(jid, { title, rows, buttons, imageMessage })
 ```
 
 ---
@@ -1881,7 +1956,8 @@ const metadata = await sock.groupMetadata(groupJid)
 const code = await sock.groupInviteCode(groupJid)
 console.log(`https://chat.whatsapp.com/${code}`)
 
-await sock.groupRevokeInvite(groupJid)        // revoke invite
+await sock.groupRevokeInvite(groupJid)        // revoke invite link
+await sock.groupRevokeInviteV4(groupJid, '1234567890@s.whatsapp.net') // revoke a specific user's pending invite
 await sock.groupAcceptInvite('INVITE_CODE')   // join group
 await sock.groupLeave(groupJid)               // leave group
 ```
@@ -2083,6 +2159,57 @@ await sock.updateReadReceiptsPrivacy('all')
 await sock.updateGroupsAddPrivacy('contacts')
 ```
 
+### Reporting
+
+```javascript
+// ── Report Spam (works on any JID — contact or group) ─────────────────────────
+// Rich report with full message metadata. Needs at least one received message stored.
+await sock.reportSpam(jid)
+
+// With options
+await sock.reportSpam(jid, {
+  spamFlow: 'ACCOUNT_INFO_REPORT', // report flow type
+  maxMessages: 5,                  // max messages to include in report
+  messages: [...]                  // optional — manual message list, skips auto-lookup
+})
+
+// ── Report Contact (contacts only) ────────────────────────────────────────────
+// Simple report — also blocks the contact automatically after reporting
+await sock.reportContact(jid)
+
+// With specific message keys
+await sock.reportContact(jid, [message.key, message2.key])
+
+// ── Report Group (groups only) ────────────────────────────────────────────────
+// Simple report — also leaves the group automatically after reporting
+await sock.reportGroup(groupJid)
+
+// With specific message keys
+await sock.reportGroup(groupJid, [message.key, message2.key])
+```
+
+| Method | Works On | Auto-Blocks | Auto-Leaves | Detailed Report |
+|--------|----------|-------------|-------------|-----------------|
+| `reportSpam` | Contacts & Groups | ❌ | ❌ | ✅ |
+| `reportContact` | Contacts only | ✅ | ❌ | ❌ |
+| `reportGroup` | Groups only | ❌ | ✅ | ❌ |
+
+> `reportSpam` requires at least one message to have been received from the JID first — it pulls stored reporting metadata automatically.
+
+### Reporting Info Store
+
+```javascript
+// Get stored reporting info for a JID (used internally by reportSpam)
+const info = sock.getStoredReportingInfo(jid)
+const limited = sock.getStoredReportingInfo(jid, 3) // max 3 entries
+
+// Clear stored reporting info for a JID
+sock.clearStoredReportingInfo(jid)
+
+// Access available spam flow types
+console.log(sock.SPAM_FLOWS)
+```
+
 ### Extended Privacy (MEX-based)
 
 ```javascript
@@ -2158,103 +2285,264 @@ await sock.chatModify({ markRead: false }, jid)
 // ── Create & Manage ───────────────────────────────────────────────────────────
 
 // Create a channel
-const channel = await sock.newsletterCreate('Channel Name', {
-  description: 'Channel description',
-  picture: buffer  // optional
-})
+const channel = await sock.newsletterCreate('Channel Name', 'Channel description')
 console.log(channel.id) // newsletter jid
 
 // Fetch channel metadata
-const meta = await sock.newsletterMetadata('invite', 'INVITE_CODE')   // by invite code
+const meta  = await sock.newsletterMetadata('invite', 'INVITE_CODE')  // by invite code
 const meta2 = await sock.newsletterMetadata('jid', newsletterJid)     // by jid
 
 // Update channel info
-await sock.newsletterUpdate(newsletterJid, {
-  name: 'New Name',
-  description: 'New description',
-  picture: buffer,   // optional
-  reaction_codes: { codes: ['👍', '❤️', '😂'] }  // optional
-})
+await sock.newsletterUpdate(newsletterJid, { name: 'New Name' })
+await sock.newsletterUpdate(newsletterJid, { description: 'New description' })
+await sock.newsletterUpdate(newsletterJid, { picture: buffer })
+
+// Shorthand update helpers
+await sock.newsletterUpdateName(newsletterJid, 'New Name')
+await sock.newsletterUpdateDescription(newsletterJid, 'New description')
+await sock.newsletterUpdatePicture(newsletterJid, buffer)
+await sock.newsletterRemovePicture(newsletterJid)
+
+// Update reaction settings — 'ALL' | 'BASIC' | 'NONE' | 'BLOCKLIST'
+await sock.newsletterUpdateReactions(newsletterJid, 'ALL')
 
 // Delete channel
 await sock.newsletterDelete(newsletterJid)
+
+// Change channel owner
+await sock.newsletterChangeOwner(newsletterJid, newOwnerJid)
+
+// Demote an admin
+await sock.newsletterDemote(newsletterJid, userJid)
 
 // ── Follow / Unfollow ─────────────────────────────────────────────────────────
 
 await sock.newsletterFollow(newsletterJid)
 await sock.newsletterUnfollow(newsletterJid)
 
+// Get all subscribed channels
+const subscribed = await sock.newsletterSubscribed()
+
+// Subscribe to live updates for a channel
+const sub = await sock.subscribeNewsletterUpdates(newsletterJid)
+console.log(sub.duration) // how long the subscription lasts
+
 // ── Mute / Unmute ─────────────────────────────────────────────────────────────
 
 await sock.newsletterMute(newsletterJid)
 await sock.newsletterUnmute(newsletterJid)
 
-// Toggle mute with more control
-await sock.toggleNewsletterMuteV2(newsletterJid, true)   // mute
-await sock.toggleNewsletterMuteV2(newsletterJid, false)  // unmute
+// Fine-grained mute control
+await sock.newsletterUpdateUserSetting(newsletterJid, 'FOLLOWER_NOTIFICATIONS', true)   // mute follower activity
+await sock.newsletterUpdateUserSetting(newsletterJid, 'ADMIN_NOTIFICATIONS', false)     // unmute admin activity
 
-// ── Sending Messages ─────────────────────────────────────────────────────────
+// ── Admin Management ──────────────────────────────────────────────────────────
 
-// Send a text message to a channel
-await sock.sendMessage(newsletterJid, { text: 'Hello from the channel!' })
+// Get admin count
+const count = await sock.newsletterAdminCount(newsletterJid)
 
-// Send media to a channel
-await sock.sendMessage(newsletterJid, {
-  image: { url: 'https://example.com/image.jpg' },
-  caption: 'Check this out!'
+// Get admin info
+const adminInfo = await sock.newsletterAdminInfo(newsletterJid)
+console.log(adminInfo.adminCount, adminInfo.adminProfile, adminInfo.adminProfilesEnabled)
+
+// Get admin capabilities
+const capabilities = await sock.newsletterAdminCapabilities(newsletterJid)
+
+// Check if you can post status
+const { canPost, canPostMusic, capabilities: caps } = await sock.newsletterCanPostStatus(newsletterJid)
+
+// Admin invites
+await sock.newsletterCreateAdminInvite(newsletterJid, userJid)
+await sock.newsletterRevokeAdminInvite(newsletterJid, userJid)
+await sock.newsletterAcceptAdminInvite(newsletterJid)
+
+// List pending admin invites
+const pending = await sock.newsletterPendingAdminInvites(newsletterJid)
+// [{ id, phoneNumber }, ...]
+
+// ── Followers & Subscribers ───────────────────────────────────────────────────
+
+const followers    = await sock.newsletterFollowers(newsletterJid, { count: 50 })
+const subscribers  = await sock.newsletterSubscribers(newsletterJid)
+// [{ id, phoneNumber, displayName, username, role, followTime }, ...]
+
+// ── Messages ──────────────────────────────────────────────────────────────────
+
+// Fetch recent messages
+const messages = await sock.newsletterFetchMessages(newsletterJid, 20)
+
+// Fetch with pagination
+const older = await sock.newsletterFetchMessages(newsletterJid, 20, /* since */ undefined, /* after */ lastServerId)
+
+// Fetch message updates (reactions, view counts, etc.)
+const updates = await sock.newsletterFetchMessageUpdates(newsletterJid, { count: 20 })
+const paged   = await sock.newsletterFetchMessageUpdates(newsletterJid, { count: 20, before: serverId })
+
+// Pin / unpin messages
+await sock.newsletterPinMessages(newsletterJid, serverId)
+await sock.newsletterPinMessages(newsletterJid, [serverId1, serverId2])
+await sock.newsletterUnpinMessages(newsletterJid, serverId)
+
+// Label AI-generated content
+await sock.newsletterLabelAiContent(newsletterJid, serverId)
+
+// Label paid partnership
+await sock.newsletterLabelPaidPartnership(newsletterJid, serverId)
+
+// ── Reactions ─────────────────────────────────────────────────────────────────
+
+// Single reaction on a message
+await sock.newsletterReactMessage(newsletterJid, serverId, '❤️')
+
+// Remove a reaction
+await sock.newsletterReactMessage(newsletterJid, serverId, null)
+
+// Bulk reactions — single emoji, 10 times
+await sock.newsletterBulkReactions(newsletterJid, serverId, '❤️', 10)
+
+// Bulk reactions — cycle through multiple emojis (❤️ 🔥 ❤️ 🔥...), 20 total
+await sock.newsletterBulkReactions(newsletterJid, serverId, ['❤️', '🔥'], 20)
+
+// Bulk reactions — random emoji each time, 20 total
+await sock.newsletterBulkReactions(newsletterJid, serverId, ['❤️', '🔥', '😂'], 20, { mode: 'random' })
+
+// Bulk reactions — 10 of EACH emoji (30 total)
+await sock.newsletterBulkReactions(newsletterJid, serverId, ['❤️', '🔥', '😂'], 10, { mode: 'each' })
+
+// Fake reactions (local events only, not sent to server)
+await sock.newsletterBulkReactions(newsletterJid, serverId, ['❤️', '🔥'], 100, { fake: true })
+
+// Custom delay between reactions (default: 100ms)
+await sock.newsletterBulkReactions(newsletterJid, serverId, '🔥', 50, { delayMs: 200 })
+
+// Get who reacted to a message
+const reactionSenders = await sock.newsletterReactionSenders(newsletterJid, serverId)
+
+// ── Poll Votes ────────────────────────────────────────────────────────────────
+
+// Vote on a poll
+await sock.newsletterSendPollVote(newsletterJid, serverId, 'Option A')
+await sock.newsletterSendPollVote(newsletterJid, serverId, ['Option A', 'Option B'])  // multi-vote
+
+// Get poll voters
+const voters = await sock.newsletterPollVoters(newsletterJid, serverId, { limit: 100 })
+const forOption = await sock.newsletterPollVoters(newsletterJid, serverId, { voteHash: 'abc123' })
+
+// ── Questions & Responses ─────────────────────────────────────────────────────
+
+// Fetch responses to a question status
+const responses = await sock.newsletterQuestionResponses(newsletterJid, serverId, { count: 20 })
+const filtered  = await sock.newsletterQuestionResponses(newsletterJid, serverId, { filter: 'starred' })
+const searched  = await sock.newsletterQuestionResponses(newsletterJid, serverId, { searchText: 'hello' })
+
+// Update response state — e.g. star, reply
+await sock.newsletterQuestionResponseState(newsletterJid, serverId, responseServerId, 'STARRED')
+
+// ── Status Publishing ─────────────────────────────────────────────────────────
+
+// Send a text status
+await sock.newsletterSendStatus(newsletterJid, { text: 'Hello from channel!' })
+
+// Send an image status
+await sock.newsletterSendStatus(newsletterJid, { image: buffer, caption: 'Caption here' })
+
+// Send a video status
+await sock.newsletterSendStatus(newsletterJid, { video: buffer, caption: 'Caption here' })
+
+// Send an audio status
+await sock.newsletterSendStatus(newsletterJid, { audio: buffer })
+
+// Send a question on top of media
+await sock.newsletterSendStatus(newsletterJid, { image: buffer, question: true })
+
+// Send a question response (text reply to a question)
+await sock.newsletterSendStatus(newsletterJid, { text: 'My answer' }, {
+  interactionType: 'question_response',
+  parentServerId: questionServerId
 })
 
-// Or use the newsletter-specific send method
-await sock.newsletterSendMessage(newsletterJid, { text: 'Hello channel!' })
-await sock.newsletterSendMessage(newsletterJid, { image: buffer, caption: 'Photo update' })
+// Send a question reshare (reshare a question with media)
+await sock.newsletterSendStatus(newsletterJid, { image: buffer }, {
+  interactionType: 'question_reshare',
+  parentServerId:  questionServerId,
+  responseServerId: responseServerId
+})
 
-// ── React to a Newsletter Message ────────────────────────────────────────────
+// Mark status as AI-generated
+await sock.newsletterSendStatus(newsletterJid, { text: 'AI content' }, { aiContent: true })
 
-await sock.newsletterReactMessage(newsletterJid, serverMessageId, '👍')
+// Send without status attribution
+await sock.newsletterSendStatus(newsletterJid, { text: 'No attribution' }, { statusAttribution: false })
 
-// ── Fetch Messages ───────────────────────────────────────────────────────────
+// Access the server id from the result
+const sent = await sock.newsletterSendStatus(newsletterJid, { text: 'Hello' })
+console.log(sent.newsletterStatusServerId)  // use this for reactions, pins, etc.
 
-// Fetch recent messages from a channel
-const messages = await sock.newsletterFetchMessages(
-  newsletterJid,
-  20,        // count (default: 20)
-  undefined, // since — fetch messages after this server_id
-  undefined  // after — fetch messages after this timestamp
-)
+// ── Status Management ─────────────────────────────────────────────────────────
 
-// Fetch message updates (reactions, views)
-const updates = await sock.newsletterFetchMessageUpdates(newsletterJid, serverMessageId)
+// React to a status
+await sock.newsletterReactStatus(newsletterJid, serverId, '❤️')
 
-// ── Subscribers ──────────────────────────────────────────────────────────────
+// Remove a status reaction
+await sock.newsletterReactStatus(newsletterJid, serverId, null)
 
-// Get subscriber list
-const subscribers = await sock.newsletterSubscribers(newsletterJid)
-// Returns: [{ id, phoneNumber, displayName, username, role, followTime }]
+// Revoke / delete a status
+await sock.newsletterRevokeStatus(newsletterJid, statusId)
 
-// ── Notification Settings ────────────────────────────────────────────────────
+// Fetch published statuses
+const statuses = await sock.newsletterFetchStatus(newsletterJid, { count: 20 })
+const before   = await sock.newsletterFetchStatus(newsletterJid, { count: 20, before: serverId })
+const after    = await sock.newsletterFetchStatus(newsletterJid, { count: 20, after:  serverId })
 
-// Control follower activity notifications
-await sock.newsletterUserSetting(newsletterJid, 'FOLLOWER_NOTIFICATIONS', true)   // mute follower activity
-await sock.newsletterUserSetting(newsletterJid, 'FOLLOWER_NOTIFICATIONS', false)  // unmute follower activity
+// Fetch status updates (counts, reactions, etc.)
+const statusUpdates = await sock.newsletterFetchStatusUpdates(newsletterJid, { count: 20 })
 
-// ── Admin Management ─────────────────────────────────────────────────────────
+// ── Add-ons ───────────────────────────────────────────────────────────────────
 
-// Create an admin invite for another user
-const invite = await sock.newsletterAdminCreate(newsletterJid, '1234567890@s.whatsapp.net')
+// Get your own reactions/votes across all channels
+const myAddOns       = await sock.newsletterMyAddOns()
+const myStatusAddOns = await sock.newsletterStatusMyAddOns()
 
-// Revoke an admin invite
-await sock.newsletterAdminRevoke(newsletterJid, '1234567890@s.whatsapp.net')
+// Filter by channel
+const filtered = await sock.newsletterMyAddOns({ jid: newsletterJid })
 
-// Promote a subscriber to admin
-await sock.newsletterPromoteAdmin(newsletterJid, '1234567890@s.whatsapp.net')
+// ── Analytics & Insights ──────────────────────────────────────────────────────
 
-// Demote an admin back to subscriber
-await sock.newsletterDemoteAdmin(newsletterJid, '1234567890@s.whatsapp.net')
+const insights = await sock.newsletterInsights(newsletterJid)
+const custom   = await sock.newsletterInsights(newsletterJid, { metrics: ['NET_FOLLOWS', 'UNFOLLOWS', 'IMPRESSIONS'] })
 
-// ── Groups linked to a Newsletter ────────────────────────────────────────────
+// ── Enforcements & Reports ────────────────────────────────────────────────────
 
-// Get groups linked to a newsletter
-const linked = await sock.groupLinkedNewsletters(groupJid)
+// Get enforcements (violations, suspensions, etc.)
+const enforcements = await sock.newsletterEnforcements(newsletterJid)
+const { adminProfiles, profilePictureDeletions, suspensions, violatingMessages, geoSuspensions } = enforcements
+
+// Get all your channel reports
+const reports = await sock.newsletterReports()
+
+// Appeal a report
+await sock.newsletterAppealReport(reportId, 'REASON_HERE')
+
+// ── Discovery ─────────────────────────────────────────────────────────────────
+
+// Browse recommended channels
+const recommended = await sock.newsletterRecommended({ limit: 20 })
+
+// Browse by country
+const local = await sock.newsletterRecommended({ countryCodes: ['NG', 'US'] })
+
+// Search channels
+const results = await sock.newsletterDirectorySearch('football', { limit: 20 })
+
+// Browse directory
+const directory = await sock.newsletterDirectoryList({ view: 'RECOMMENDED', limit: 20 })
+const byCountry = await sock.newsletterDirectoryList({ countryCodes: ['NG'], categories: ['SPORTS'] })
+
+// Browse categories
+const categories = await sock.newsletterDirectoryCategories({ perCategoryLimit: 10 })
+
+// Find similar channels
+const similar = await sock.newsletterSimilar(newsletterJid, { limit: 20 })
 ```
 
 ---
@@ -2300,11 +2588,15 @@ r.addInlineImage('url', 'center') // alignment: center | left | right
 r.addSuggest(['Pill 1', 'Pill 2'], false) // false = action row, true = hscroll
 r.addSection(rawSectionObject)   // raw section for advanced use
 r.addEmbeddedScreen(screenObject) // embedded tabbed panel
+r.addRawSections(sections, submessages)  // escape hatch — raw unified sections + submessages
 
 // Special methods
 r.loadFrom(msg)                  // load existing AIRich message for editing
 await r.send(jid, opts)          // send
 await r.sendEdit(jid, targetId)  // edit a previously sent message
+// Standalone
+await sock.sendRichGeneration(jid, { text, mediaType, url, status, estimatedMs, itemId, responseId })
+await sock.sendUnifiedResponse(jid, sections, submessages, options)
 ```
 
 **Named node IDs** — update specific content after adding:
@@ -2422,6 +2714,125 @@ a.setDelay(1500) // ms between each item send (default: 1500)
 // Requires at least 2 items
 await a.send(jid)
 ```
+
+### VerticalAlbum Builder
+
+Sends a full-width stacked media album using the AIRich unified response format. Unlike the standard Album builder (which sends individual messages), this renders all items in a single rich message.
+
+\`\`\`javascript
+await sock.sendMessage(jid, {
+  verticalAlbumMessage: [
+    { type: 'image', image: { url: 'https://example.com/1.jpg' } },
+    { type: 'video', video: { url: 'https://example.com/2.mp4' }, duration: 10 },
+    { type: 'image', image: { url: 'https://example.com/3.jpg' }, width: 1280, height: 720 }
+  ]
+})
+
+// via shorthand
+await sock.sendVerticalAlbumMessage(jid, {
+  items: [
+    { type: 'image', image: { url: 'https://example.com/1.jpg' } },
+    { type: 'video', video: { url: 'https://example.com/2.mp4' } }
+  ]
+})
+\`\`\`
+
+---
+
+### GridImage Builder
+
+Sends a grid of images using the GRID_IMAGE protocol submessage type.
+
+\`\`\`javascript
+await sock.sendMessage(jid, {
+  gridImageMessage: {
+    imageUrls: [
+      { url: 'https://example.com/1.jpg', width: 600, height: 400 },
+      { url: 'https://example.com/2.jpg', width: 600, height: 400 },
+      { url: 'https://example.com/3.jpg', width: 600, height: 400 }
+    ]
+  }
+})
+
+// via shorthand
+await sock.sendGridImageMessage(jid, {
+  imageUrls: [
+    'https://example.com/1.jpg',
+    'https://example.com/2.jpg'
+  ]
+})
+\`\`\`
+
+---
+
+### VideoGrid Builder
+
+Sends a grid of videos using GenAIVideoPrimitive with full delivery metadata support.
+
+\`\`\`javascript
+await sock.sendMessage(jid, {
+  videoGridMessage: {
+    videos: [
+      {
+        url: 'https://example.com/1.mp4',
+        title: 'Video 1',
+        thumbnailUrl: 'https://example.com/thumb1.jpg',
+        creator: 'Creator Name',
+        likes: 1200,
+        isVerified: true
+      },
+      {
+        url: 'https://example.com/2.mp4',
+        title: 'Video 2',
+        thumbnailUrl: 'https://example.com/thumb2.jpg'
+      }
+    ]
+  }
+})
+
+// via shorthand
+await sock.sendVideoGridMessage(jid, {
+  videos: [
+    { url: 'https://example.com/1.mp4', title: 'Clip 1' },
+    { url: 'https://example.com/2.mp4', title: 'Clip 2' }
+  ]
+})
+\`\`\`
+
+---
+
+### A2UI Builder
+
+Sends a WhatsApp A2UI bloksWidget interactive message. Use the command menu preset or build a fully custom component tree.
+
+\`\`\`javascript
+// Generic A2UI envelope
+await sock.sendA2UIMessage(jid, {
+  bloksWidget: {
+    type: 'im_a2ui',
+    data: JSON.stringify({ version: 'v0.9', createSurface: { /* ... */ } })
+  },
+  nativeFlowMessage: { buttons: [{ name: 'single_select', buttonParamsJson: '...' }] }
+})
+
+// Command menu preset
+await sock.sendA2UICommandMenu(jid, {
+  title: 'NexusBot Menu',
+  rows: [
+    ['!help', 'Show all commands'],
+    ['!ping', 'Check bot status'],
+    ['!ai', 'Ask AI a question']
+  ],
+  buttons: [
+    { text: 'GitHub', url: 'https://github.com/nexustechpro2' }
+  ],
+  footer: 'Powered by NexusTechPro'
+})
+\`\`\`
+
+**A2UI row format:** `[command, description]` or `{ title, description, id }`
+
+**A2UI button format:** `{ text, url }` or `{ label, url }`
 
 ---
 
@@ -2584,6 +2995,13 @@ import {
   extractIE,               // extractIE(text, extraEntities?) → { text, inline_entities }
   waitAllPromises,         // deep async resolver
   generateVerificationMetadata, // bot signature metadata
+  // AIRich utilities
+  hasVerifiableProofs,
+  wrapToBotForwardedMessage,
+  attachBotVerificationProofs,
+  buildImaginePrimitive,
+  prepareRichGenerationMessage,
+  extractVerificationMetadata
 
   // Status checker
   checkStatusWA,

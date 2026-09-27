@@ -84,5 +84,5 @@ async function boot() {
 await boot()
 
 export { proto, codec, generateTable, _reloadProto } from './WAProtoCompile.js'
-export { getWAVersion } from './fetcher.js'
+export { getWAVersion, fetchProtoBundle } from './fetcher.js'
 export { default } from './WAProtoCompile.js'
