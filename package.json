@@ -3,7 +3,7 @@
   "name": "@nexustechpro/baileys",
   "type": "module",
   "version": "2.2.8",
-  "description": "Advanced WhatsApp Web API built on Baileys — interactive messages, buttons, carousels, products, events, payments, polls, albums, sticker packs and more.",
+  "description": "Advanced WhatsApp Web API built on Baileys \u2014 interactive messages, buttons, carousels, products, events, payments, polls, albums, sticker packs and more.",
   "keywords": [
     "baileys",
     "baileys-mod",
@@ -203,5 +203,14 @@
   "packageManager": "yarn@4.9.2",
   "engines": {
     "node": ">=20.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./lib/index.js",
+      "require": "./lib/index.cjs",
+      "default": "./lib/index.js"
+    },
+    "./lib/*": "./lib/*",
+    "./WAProto/*": "./WAProto/*"
   }
 }
