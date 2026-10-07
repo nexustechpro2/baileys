@@ -325,6 +325,9 @@ const sock = makeWASocket({
   // Sync full message history on connect
   syncFullHistory: false,
 
+  // Mark all outgoing messages as AI-generated (global default)
+  aiLabel: false,
+
   // Logger (use pino({ level: 'silent' }) to suppress logs)
   logger: pino({ level: 'silent' }),
 
@@ -509,6 +512,7 @@ Every key you can pass to `sock.sendMessage`:
 | `statusMentionMessage` | Mention someone in a status |
 | `pollResultMessage` | Poll result snapshot |
 | `deliveryMode` | Controls which devices receive the message — see Delivery Mode section |
+| `ai` | Mark message as AI-generated (injects bot label + supportPayload) |
 
 ---
 
@@ -530,8 +534,15 @@ await sock.sendMessage(jid, {
   mentions: ['1234567890@s.whatsapp.net']
 })
 
-// AI-generated label
+// AI-generated label — marks the message as bot-generated
+// content flag (per-message)
 await sock.sendMessage(jid, { text: 'AI response here', ai: true })
+// options flag (per-message)
+await sock.sendMessage(jid, { text: 'AI response here' }, { ai: true })
+// or use aiLabel alias
+await sock.sendMessage(jid, { text: 'AI response here' }, { aiLabel: true })
+// global config (applies to every message from this socket)
+const sock = makeWASocket({ aiLabel: true })
 ```
 
 ### Delivery Mode
@@ -2719,7 +2730,7 @@ await a.send(jid)
 
 Sends a full-width stacked media album using the AIRich unified response format. Unlike the standard Album builder (which sends individual messages), this renders all items in a single rich message.
 
-\`\`\`javascript
+```javascript
 await sock.sendMessage(jid, {
   verticalAlbumMessage: [
     { type: 'image', image: { url: 'https://example.com/1.jpg' } },
@@ -2735,7 +2746,7 @@ await sock.sendVerticalAlbumMessage(jid, {
     { type: 'video', video: { url: 'https://example.com/2.mp4' } }
   ]
 })
-\`\`\`
+```
 
 ---
 
@@ -2743,7 +2754,7 @@ await sock.sendVerticalAlbumMessage(jid, {
 
 Sends a grid of images using the GRID_IMAGE protocol submessage type.
 
-\`\`\`javascript
+```javascript
 await sock.sendMessage(jid, {
   gridImageMessage: {
     imageUrls: [
@@ -2761,7 +2772,7 @@ await sock.sendGridImageMessage(jid, {
     'https://example.com/2.jpg'
   ]
 })
-\`\`\`
+```
 
 ---
 
@@ -2769,7 +2780,7 @@ await sock.sendGridImageMessage(jid, {
 
 Sends a grid of videos using GenAIVideoPrimitive with full delivery metadata support.
 
-\`\`\`javascript
+```javascript
 await sock.sendMessage(jid, {
   videoGridMessage: {
     videos: [
@@ -2797,7 +2808,7 @@ await sock.sendVideoGridMessage(jid, {
     { url: 'https://example.com/2.mp4', title: 'Clip 2' }
   ]
 })
-\`\`\`
+```
 
 ---
 
@@ -2805,7 +2816,7 @@ await sock.sendVideoGridMessage(jid, {
 
 Sends a WhatsApp A2UI bloksWidget interactive message. Use the command menu preset or build a fully custom component tree.
 
-\`\`\`javascript
+```javascript
 // Generic A2UI envelope
 await sock.sendA2UIMessage(jid, {
   bloksWidget: {
@@ -2828,7 +2839,7 @@ await sock.sendA2UICommandMenu(jid, {
   ],
   footer: 'Powered by NexusTechPro'
 })
-\`\`\`
+```
 
 **A2UI row format:** `[command, description]` or `{ title, description, id }`
 
