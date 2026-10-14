@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@nexustechpro/baileys",
+  "name": "@zervonex/baileys",
   "type": "module",
   "version": "3.0.1",
   "description": "Advanced WhatsApp Web API built on Baileys — interactive messages, buttons, carousels, products, events, payments, polls, albums, sticker packs and more.",
@@ -66,7 +66,7 @@
     "url": "git+https://github.com/nexustechpro2/baileys.git"
   },
   "license": "MIT",
-  "author": "nexustechpro2",
+  "author": "zervonex",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
