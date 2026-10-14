@@ -2,10 +2,10 @@
 
 <p>
   <!-- Banner -->
-  <img src="https://files.catbox.moe/gzkpf8.jpg" alt="NexusTechPro Banner" />
+  <img src="https://files.catbox.moe/gzkpf8.jpg" alt="zervonex Banner" />
 </p>
 
-# @nexustechpro/baileys
+# @zervonex/baileys
 
 <p>
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="100%">
@@ -16,24 +16,24 @@
 
 <p>
   <!-- NPM Version -->
-  <a href="https://www.npmjs.com/package/@nexustechpro/baileys">
-    <img src="https://img.shields.io/npm/v/@nexustechpro/baileys?color=success&logo=npm&style=flat-square" alt="NPM Version" />
+  <a href="https://www.npmjs.com/package/@zervonex/baileys">
+    <img src="https://img.shields.io/npm/v/@zervonex/baileys?color=success&logo=npm&style=flat-square" alt="NPM Version" />
   </a>
   <!-- Downloads -->
-  <a href="https://www.npmjs.com/package/@nexustechpro/baileys">
-    <img src="https://img.shields.io/npm/dt/@nexustechpro/baileys?color=blue&logo=npm&style=flat-square" alt="Downloads" />
+  <a href="https://www.npmjs.com/package/@zervonex/baileys">
+    <img src="https://img.shields.io/npm/dt/@zervonex/baileys?color=blue&logo=npm&style=flat-square" alt="Downloads" />
   </a>
   <!-- License -->
   <a href="https://github.com/nexustechpro2/baileys/blob/main/LICENSE">
-    <img src="https://img.shields.io/npm/l/@nexustechpro/baileys?color=yellow&style=flat-square" alt="License" />
+    <img src="https://img.shields.io/npm/l/@zervonex/baileys?color=yellow&style=flat-square" alt="License" />
   </a>
   <!-- Node Version -->
   <a href="https://nodejs.org">
-    <img src="https://img.shields.io/node/v/@nexustechpro/baileys?style=flat-square" alt="Node Version" />
+    <img src="https://img.shields.io/node/v/@zervonex/baileys?style=flat-square" alt="Node Version" />
   </a>
   <!-- Socket Badge -->
-  <a href="https://socket.dev/npm/package/@nexustechpro/baileys">
-    <img src="https://socket.dev/api/badge/npm/package/@nexustechpro/baileys" alt="Socket Badge" />
+  <a href="https://socket.dev/npm/package/@zervonex/baileys">
+    <img src="https://socket.dev/api/badge/npm/package/@zervonex/baileys" alt="Socket Badge" />
   </a>
 </p>
 <p>
@@ -107,17 +107,17 @@
 
 ```bash
 # npm
-npm install @nexustechpro/baileys
+npm install @zervonex/baileys
 
 # yarn
-yarn add @nexustechpro/baileys
+yarn add @zervonex/baileys
 ```
 
 **Drop-in replacement for `@whiskeysockets/baileys`** — add this to `package.json`:
 ```json
 {
   "dependencies": {
-    "@whiskeysockets/baileys": "npm:@nexustechpro/baileys"
+    "@whiskeysockets/baileys": "npm:@zervonex/baileys"
   }
 }
 
@@ -125,7 +125,7 @@ yarn add @nexustechpro/baileys
 
 {
     "dependencies": {
-        "@nexustechpro/baileys": "latest"
+        "@zervonex/baileys": "latest"
     }
 }
 ```
@@ -133,10 +133,10 @@ yarn add @nexustechpro/baileys
 **Import:**
 ```javascript
 // ESM (recommended)
-import makeWASocket from '@nexustechpro/baileys'
+import makeWASocket from '@zervonex/baileys'
 
 // CommonJS
-const { default: makeWASocket } = require('@nexustechpro/baileys')
+const { default: makeWASocket } = require('@zervonex/baileys')
 ```
 
 ---
@@ -149,7 +149,7 @@ import makeWASocket, {
   DisconnectReason,
   makeCacheableSignalKeyStore,
   Browsers
-} from '@nexustechpro/baileys'
+} from '@zervonex/baileys'
 import pino from 'pino'
 
 const connectToWhatsApp = async () => {
@@ -202,7 +202,7 @@ import makeWASocket, {
   useMultiFileAuthState,
   makeCacheableSignalKeyStore,
   Browsers
-} from '@nexustechpro/baileys'
+} from '@zervonex/baileys'
 import pino from 'pino'
 
 const { state, saveCreds } = await useMultiFileAuthState('auth_session')
@@ -243,7 +243,7 @@ import makeWASocket, {
   useMultiFileAuthState,
   makeCacheableSignalKeyStore,
   Browsers
-} from '@nexustechpro/baileys'
+} from '@zervonex/baileys'
 import qrcode from 'qrcode-terminal'
 import pino from 'pino'
 
@@ -288,7 +288,7 @@ The `browser` config tells WhatsApp what client you appear to be. This affects h
 | `Browsers.appropriate('Chrome')` | Auto-detects your OS | Uses your actual platform |
 
 ```javascript
-import { Browsers } from '@nexustechpro/baileys'
+import { Browsers } from '@zervonex/baileys'
 
 // Pass any browser string as the second argument (Chrome, Safari, Firefox, etc.)
 const sock = makeWASocket({
@@ -352,7 +352,7 @@ Two adapters are available. They do **not** share an identical return shape — 
 Atomic writes, sha256 checksum integrity, per-file mutex locking, corrupt file recovery, and legacy file upgrade. Best for single-instance bots or local development.
 
 ```javascript
-import { useMultiFileAuthState } from '@nexustechpro/baileys'
+import { useMultiFileAuthState } from '@zervonex/baileys'
 
 const { state, saveCreds, getStats } = await useMultiFileAuthState('auth_session', {
     preKeyRetention:   150,  // how many recent prekeys to keep (default: 150)
@@ -379,7 +379,7 @@ Storage format matches `useMultiFileAuthState` exactly: every value is wrapped a
 The first argument is the **session ID** — equivalent to the folder name in `useMultiFileAuthState`. It's used as the Keyv namespace, so multiple bots can safely share one backend. The second argument is a connection string, a pre-built `Keyv` instance, or a raw `KeyvStoreAdapter`:
 
 ```javascript
-import { useKeyvAuthState } from '@nexustechpro/baileys'
+import { useKeyvAuthState } from '@zervonex/baileys'
 
 // ── Redis ─────────────────────────────────────────────────────────────────────
 const { state, saveCreds } = await useKeyvAuthState('bot1', 'redis://localhost:6379')
@@ -411,7 +411,7 @@ Supported connection string protocols: `redis:`/`rediss:`, `mongodb:`/`mongodb+s
 For backends without a connection string (e.g. DynamoDB), or to reuse one connection across multiple `useKeyvAuthState` calls yourself, pass a pre-built adapter or `Keyv` instance instead of a string:
 
 ```javascript
-import { useKeyvAuthState } from '@nexustechpro/baileys'
+import { useKeyvAuthState } from '@zervonex/baileys'
 import KeyvMongo from '@keyv/mongo'
 
 const backend = new KeyvMongo('mongodb://localhost/baileys') // build once, share across sessions
@@ -656,7 +656,7 @@ await sock.sendMessage(jid, {
 
 #### Contact
 ```javascript
-const vcard = 'BEGIN:VCARD\nVERSION:3.0\nFN:John Doe\nORG:NexusTechPro;\nTEL;type=CELL;waid=1234567890:+1 234 567 890\nEND:VCARD'
+const vcard = 'BEGIN:VCARD\nVERSION:3.0\nFN:John Doe\nORG:zervonex;\nTEL;type=CELL;waid=1234567890:+1 234 567 890\nEND:VCARD'
 
 await sock.sendMessage(jid, {
   contacts: {
@@ -838,7 +838,7 @@ await sock.sendMessage(jid, { text: 'Replying to your status!' }, {
 ```javascript
 await sock.sendMessage(jid, {
   text: 'Choose an option',
-  footer: '© NexusTechPro',
+  footer: '© zervonex',
   buttons: [
     {
       name: 'quick_reply',
@@ -848,8 +848,8 @@ await sock.sendMessage(jid, {
       name: 'cta_url',
       buttonParamsJson: JSON.stringify({
         display_text: 'Visit Website',
-        url: 'https://nexustechpro.com',
-        merchant_url: 'https://nexustechpro.com'
+        url: 'https://zervonex.com',
+        merchant_url: 'https://zervonex.com'
       })
     }
   ]
@@ -861,7 +861,7 @@ await sock.sendMessage(jid, {
 await sock.sendMessage(jid, {
   image: { url: 'https://example.com/image.jpg' },
   caption: 'Description',
-  footer: '© NexusTechPro',
+  footer: '© zervonex',
   buttons: [
     {
       name: 'quick_reply',
@@ -916,7 +916,7 @@ await sock.sendMessage(jid, {
 await sock.sendMessage(jid, {
   interactiveMessage: {
     title: 'Interactive',
-    footer: '© NexusTechPro',
+    footer: '© zervonex',
     image: { url: 'https://example.com/image.jpg' },
     nativeFlowMessage: {
       messageParamsJson: JSON.stringify({ /* optional advanced config */ }),
@@ -954,7 +954,7 @@ await sock.sendMessage(jid, {
     },
     {
       name: 'cta_url',
-      buttonParamsJson: JSON.stringify({ display_text: 'Visit Website', url: 'https://nexustechpro.com' })
+      buttonParamsJson: JSON.stringify({ display_text: 'Visit Website', url: 'https://zervonex.com' })
     }
   ]
 }, { quoted: message })
@@ -974,7 +974,7 @@ await sock.sendMessage(jid, {
     },
     {
       name: 'cta_url',
-      buttonParamsJson: JSON.stringify({ display_text: 'Visit Website', url: 'https://nexustechpro.com' })
+      buttonParamsJson: JSON.stringify({ display_text: 'Visit Website', url: 'https://zervonex.com' })
     }
   ]
 }, { quoted: message })
@@ -1003,7 +1003,7 @@ await sock.sendMessage(jid, {
     },
     {
       name: 'cta_url',
-      buttonParamsJson: JSON.stringify({ display_text: 'Visit Website', url: 'https://nexustechpro.com' })
+      buttonParamsJson: JSON.stringify({ display_text: 'Visit Website', url: 'https://zervonex.com' })
     }
   ]
 }, { quoted: message })
@@ -1094,7 +1094,7 @@ await sock.album()
 await sock.sendMessage(jid, {
   carouselMessage: {
     caption: 'Our Products',
-    footer: 'Powered by NexusTechPro',
+    footer: 'Powered by zervonex',
     cards: [
       {
         header: { title: 'Card 1', hasMediaAttachment: false },
@@ -1103,7 +1103,7 @@ await sock.sendMessage(jid, {
         nativeFlowMessage: {
           buttons: [
             { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Select', id: 'card1' }) },
-            { name: 'cta_url', buttonParamsJson: JSON.stringify({ display_text: 'Learn More', url: 'https://nexustechpro.com' }) }
+            { name: 'cta_url', buttonParamsJson: JSON.stringify({ display_text: 'Learn More', url: 'https://zervonex.com' }) }
           ]
         }
       },
@@ -1124,8 +1124,8 @@ await sock.sendMessage(jid, {
 // via builder — see Builder API section
 await sock.carousel()
   .setCaption('Our Products')
-  .setFooter('Powered by NexusTechPro')
-  .card(sock.button().setBody('Card 1 description').reply('Select', 'card1').url('Learn More', 'https://nexustechpro.com'))
+  .setFooter('Powered by zervonex')
+  .card(sock.button().setBody('Card 1 description').reply('Select', 'card1').url('Learn More', 'https://zervonex.com'))
   .card(sock.button().setBody('Card 2 description').reply('Select', 'card2'))
   .send(jid)
 ```
@@ -1336,7 +1336,7 @@ Send a full sticker pack. Supports buffers, file paths, and URLs. Packs over 60 
 await sock.sendMessage(jid, {
   stickerPack: {
     name: 'My Stickers',
-    publisher: 'NexusTechPro',
+    publisher: 'zervonex',
     stickers: [
       { data: buffer,                              emojis: ['😊'] },
       { data: './sticker.png',                     emojis: ['😂'] },
@@ -1353,7 +1353,7 @@ await sock.sendMessage(jid, {
 // Method 2 — dedicated shorthand
 await sock.stickerPackMessage(jid, {
   name: 'My Stickers',
-  publisher: 'NexusTechPro',
+  publisher: 'zervonex',
   stickers: [
     { data: buffer, emojis: ['😊'] },
     { data: './sticker.png', emojis: ['😂'] }
@@ -1440,8 +1440,8 @@ await sock.airich()
   .send(jid)
 
 // via shorthand
-await sock.sendCodeBlock(jid, code, quoted, { language: 'javascript', title: 'Example', footer: '© NexusTechPro' })
-await sock.sendCodeBlockV2(jid, code, quoted, { language: 'go', title: 'Go Example', text: 'Here is a Go snippet:', footer: '© NexusTechPro' })
+await sock.sendCodeBlock(jid, code, quoted, { language: 'javascript', title: 'Example', footer: '© zervonex' })
+await sock.sendCodeBlockV2(jid, code, quoted, { language: 'go', title: 'Go Example', text: 'Here is a Go snippet:', footer: '© zervonex' })
 ```
 
 **Supported languages:** Any of the 190+ languages supported by PrismJS — `javascript`, `typescript`, `python`, `rust`, `go`, `java`, `cpp`, `kotlin`, `swift`, `bash`, `sql`, `dockerfile`, `solidity`, `graphql`, and many more.
@@ -1490,10 +1490,10 @@ await sock.sendTableV2(jid, [
 
 // sendList — two-column key/value style
 await sock.sendList(jid, 'Bot Info', [
-  ['Name', 'NexusTechPro'],
+  ['Name', 'zervonex'],
   ['Version', '2.2.7'],
-  ['Developer', 'NexusTechPro']
-], quoted, { footer: '© NexusTechPro' })
+  ['Developer', 'zervonex']
+], quoted, { footer: '© zervonex' })
 ```
 
 ---
@@ -1505,7 +1505,7 @@ await sock.sendList(jid, 'Bot Info', [
 await sock.sendMessage(jid, {
   aiRich: {
     text: '## Hello\n\nThis supports **markdown**:\n\n- Bold\n- Lists\n- Headers',
-    footer: '_Powered by NexusTechPro_'
+    footer: '_Powered by zervonex_'
   }
 }, { quoted: message })
 
@@ -1513,14 +1513,14 @@ await sock.sendMessage(jid, {
 await sock.sendMessage(jid, {
   aiRich: {
     texts: ['## Title', 'First paragraph', 'Second paragraph'],
-    footer: '_NexusTechPro_'
+    footer: '_zervonex_'
   }
 }, { quoted: message })
 
 // via builder
 await sock.airich()
   .addText('## Hello World\nThis is *bold* and _italic_.')
-  .addFOAText('# NexusTechPro\n## Powered by @nexustechpro/baileys')
+  .addFOAText('# zervonex\n## Powered by @zervonex/baileys')
   .addTip('Always validate user input before processing.')
   .addMetadata('Generated just now · NexusBot v2.2.7')
   .send(jid)
@@ -1694,7 +1694,7 @@ await sock.airich()
   })
   .addProduct({
     title: 'NexusBot Premium',
-    brand: 'NexusTechPro',
+    brand: 'zervonex',
     price: '$9.99/mo',
     sale_price: '$4.99/mo',
     product_url: 'https://github.com/nexustechpro2',
@@ -1791,17 +1791,17 @@ await sock.sendMessage(jid, {
       { type: 'table', table: ['Benchmarks', ['Method', 'Ops/sec'], ['split.reverse.join', '1.2M'], ['manual loop', '2.1M']] },
       { type: 'sources', sources: [{ url: 'https://jsperf.app', displayName: 'JSPerf', subtitle: 'jsperf.app' }] }
     ],
-    footer: '_NexusTechPro_'
+    footer: '_zervonex_'
   }
 }, { quoted: message })
 
 // via builder — full combo
 await sock.airich()
-  .setTitle('NexusTechPro Bot')
-  .setFooter('Powered by @nexustechpro/baileys v2.2.7')
-  .addText('*Welcome to NexusTechPro!*')
+  .setTitle('zervonex Bot')
+  .setFooter('Powered by @zervonex/baileys latest')
+  .addText('*Welcome to zervonex!*')
   .addDivider()
-  .addCode('python', 'print("Hello from NexusTechPro")')
+  .addCode('python', 'print("Hello from zervonex")')
   .addTable([
     ['Plan', 'Price', 'Sessions'],
     ['Basic', 'Free', '1'],
@@ -1809,7 +1809,7 @@ await sock.airich()
     ['Enterprise', 'Custom', 'Unlimited']
   ])
   .addTask({ taskId: 't1', title: 'Bot online', status: 'DONE' })
-  .addMetadata('NexusTechPro • v2.2.7 • 2026')
+  .addMetadata('zervonex • v2.2.7 • 2026')
   .addSuggest(['View commands', 'Get support', 'Upgrade plan'])
   .addFooterAction({ cta_text: '📖 View Dashboard', cta_type: 'OPEN_URL', cta_url: 'https://github.com/nexustechpro2' })
   .addFOAText('_Reply with any message to continue_')
@@ -1820,7 +1820,7 @@ await sock.sendRichMessage(jid, {
   text: 'Hello from sendRichMessage!',
   code: 'console.log("works!")',
   language: 'javascript',
-  footer: '_NexusTechPro_'
+  footer: '_zervonex_'
 }, quoted)
 ```
 
@@ -1913,7 +1913,7 @@ await sock.sendMessage(jid, { pin: { type: 0, time: 0, key: message.key } })
 ## 📥 Media Download
 
 ```javascript
-import { downloadMediaMessage, getContentType } from '@nexustechpro/baileys'
+import { downloadMediaMessage, getContentType } from '@zervonex/baileys'
 
 sock.ev.on('messages.upsert', async ({ messages }) => {
   const msg = messages[0]
@@ -2053,21 +2053,21 @@ const blocked = await sock.fetchBlocklist()
 
 ```javascript
 // Check if a username is available
-const result = await sock.checkUsername('nexustechpro')
-// { available: true, username: 'nexustechpro', session_id: '...' }
-// { available: false, suggestions: ['nexustechpro1', 'nexustechpro_'], ... }
+const result = await sock.checkUsername('zervonex')
+// { available: true, username: 'zervonex', session_id: '...' }
+// { available: false, suggestions: ['zervonex1', 'zervonex_'], ... }
 
 // Check multiple usernames at once
-const results = await sock.checkUsernameMulti(['nexustechpro', 'nexustechpro'])
+const results = await sock.checkUsernameMulti(['zervonex', 'zervonex'])
 
 // Set your username
-await sock.setUsername('nexustechpro')
+await sock.setUsername('zervonex')
 
 // Set with options
-await sock.setUsername('nexustechpro', { pin: '1234' })
+await sock.setUsername('zervonex', { pin: '1234' })
 
 // Check availability then set in one call
-await sock.checkAndSetUsername('nexustechpro')
+await sock.checkAndSetUsername('zervonex')
 
 // Get your current username
 const username = await sock.getMyUsername()
@@ -2079,11 +2079,11 @@ await sock.deleteUsername()
 await sock.setUsernamePin('1234')
 
 // Find a user by their @username
-const user = await sock.findUserByUsername('nexustechpro')
+const user = await sock.findUserByUsername('zervonex')
 // { jid: '1234567890@s.whatsapp.net', contact: true }
 
 // Find a user with PIN-protected username
-const user = await sock.findUserByUsername('nexustechpro', '1234')
+const user = await sock.findUserByUsername('zervonex', '1234')
 
 // Fetch usernames of multiple contacts
 const list = await sock.fetchContactUsernames('1234567890@s.whatsapp.net', '0987654321@s.whatsapp.net')
@@ -2101,7 +2101,7 @@ const suggestions = await sock.getUsernameRecommendations()
 const result = await sock.checkStatusWA('1234567890')
 
 // Or direct import (no socket needed)
-import { checkStatusWA } from '@nexustechpro/baileys'
+import { checkStatusWA } from '@zervonex/baileys'
 const result = await checkStatusWA('1234567890')
 
 // Response examples:
@@ -2134,7 +2134,7 @@ const result = await checkStatusWA('1234567890')
 { number: '+1234567890', status: 'rate_limited', isBanned: false, isNeedOfficialWa: false, banInfo: null }
 
 // Usage example
-import { checkStatusWA } from '@nexustechpro/baileys'
+import { checkStatusWA } from '@zervonex/baileys'
 const check = await checkStatusWA('1234567890')
 if (check.isBanned) {
   console.log(`Banned: ${check.banInfo.banType}`)
@@ -2567,7 +2567,7 @@ All builders can be used as a fluent chain. Call `.send(jid)` to send, or `.buil
 ```javascript
 const r = sock.airich()           // create a new builder
 r.setTitle('Title')               // shown in message metadata
-r.setFooter('© NexusTechPro')    // shown below content
+r.setFooter('© zervonex')    // shown below content
 r.setBotJid('867051314767696@bot') // custom bot JID
 r.setResponseId('my-id')         // fix response ID (disables auto-refresh)
 r.setContextInfo({ ... })        // custom contextInfo fields
@@ -2635,7 +2635,7 @@ const b = sock.button()
 b.setTitle('Menu')
 b.setSubtitle('Choose an option')
 b.setBody('What would you like to do?')
-b.setFooter('© NexusTechPro')
+b.setFooter('© zervonex')
 
 // Media header (pick one)
 b.setImage('https://example.com/image.jpg')
@@ -2645,10 +2645,10 @@ b.setLocation(6.5244, 3.3792, 'Lagos')
 
 // Native-flow buttons (chainable)
 b.reply('Quick Reply', 'reply_id')
-b.url('Visit Website', 'https://nexustechpro.com')
+b.url('Visit Website', 'https://zervonex.com')
 b.call('Call Us', '+2341234567890')
 b.copy('Copy Code', 'NEXUS2025')
-b.openWebview('Open App', 'https://app.nexustechpro.com')
+b.openWebview('Open App', 'https://app.zervonex.com')
 b.catalog('View Catalog')
 b.flow('Start Flow', 'flow_id_here')
 b.remind('Set Reminder')
@@ -2676,7 +2676,7 @@ b.legacyButton('Button 2', 'btn2_id')
 
 // Template buttons (mode: 'template')
 b.templateReply('Quick Reply', 'reply_id')
-b.templateUrl('Visit', 'https://nexustechpro.com')
+b.templateUrl('Visit', 'https://zervonex.com')
 b.templateCall('Call', '+2341234567890')
 
 // Convert to a carousel card
@@ -2693,7 +2693,7 @@ await b.send(jid)
 const c = sock.carousel()
 
 c.setCaption('Our Products')
-c.setFooter('Powered by NexusTechPro')
+c.setFooter('Powered by zervonex')
 c.setCardType('HSCROLL_CARDS') // 'HSCROLL_CARDS' (default) | 'ALBUM_IMAGE'
 
 // Add cards — pass a Button builder instance or a raw card object
@@ -2837,7 +2837,7 @@ await sock.sendA2UICommandMenu(jid, {
   buttons: [
     { text: 'GitHub', url: 'https://github.com/nexustechpro2' }
   ],
-  footer: 'Powered by NexusTechPro'
+  footer: 'Powered by zervonex'
 })
 ```
 
@@ -2952,7 +2952,7 @@ if (captured) await sock.relayAiRich(targetJid, captured)
 
 ## 📦 Exported Utilities
 
-Everything exported from `@nexustechpro/baileys` that you can import directly:
+Everything exported from `@zervonex/baileys` that you can import directly:
 
 ```javascript
 import {
@@ -3016,7 +3016,7 @@ import {
 
   // Status checker
   checkStatusWA,
-} from '@nexustechpro/baileys'
+} from '@zervonex/baileys'
 ```
 
 ---
@@ -3154,7 +3154,7 @@ try {
 ### Poll Decryption
 
 ```javascript
-import { getAggregateVotesInPollMessage } from '@nexustechpro/baileys'
+import { getAggregateVotesInPollMessage } from '@zervonex/baileys'
 
 sock.ev.on('messages.update', async (event) => {
   for (const { key, update } of event) {
@@ -3195,10 +3195,10 @@ This project is **not** affiliated with WhatsApp or Meta. Use responsibly:
 
 <div align="center">
 
-**Made with ❤️ by [NexusTechPro](https://github.com/nexustechpro2)**
+**Made with ❤️ by [nexustechpro2](https://github.com/nexustechpro2)**
 
 ⭐ **Star us on GitHub!** ⭐
 
-[GitHub](https://github.com/nexustechpro2/baileys) • [NPM](https://www.npmjs.com/package/@nexustechpro/baileys)
+[GitHub](https://github.com/nexustechpro2/baileys) • [NPM](https://www.npmjs.com/package/@zervonex/baileys)
 
 </div>
