@@ -77,7 +77,7 @@ async function boot() {
         return
     }
 
-    log('No proto files found — fetching from WA Web...')
+    log('No proto files found — fetching from GitHub...')
     await refetch()
 }
 
