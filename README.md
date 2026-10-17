@@ -2,7 +2,7 @@
 
 <p>
   <!-- Banner -->
-  <img src="https://files.catbox.moe/gzkpf8.jpg" alt="zervonex Banner" />
+  <img src="https://files.catbox.moe/qrx39r.png" alt="zervonex Banner" />
 </p>
 
 # @zervonex/baileys
@@ -44,6 +44,8 @@
 </p>
 
 *Modern, feature-rich, and developer-friendly WhatsApp automation library*
+
+*Formerly known as @nexustechpro/baileys*
 
 </div>
 
