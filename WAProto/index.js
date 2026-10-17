@@ -30,7 +30,7 @@ async function regenerateFromProto() {
 }
 
 async function refetch() {
-    log('Fetching proto bundle from WhatsApp Web...')
+    log('Fetching proto bundle from GitHub...')
     const { bundle, version } = await fetchProtoBundle()
     if (!bundle) throw new Error('fetchProtoBundle returned no bundle')
     const protoText = parseBundle(bundle, version)
