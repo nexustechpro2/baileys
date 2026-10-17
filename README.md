@@ -1491,7 +1491,7 @@ await sock.sendTableV2(jid, [
 // sendList — two-column key/value style
 await sock.sendList(jid, 'Bot Info', [
   ['Name', 'zervonex'],
-  ['Version', '2.2.7'],
+  ['Version', '3.0.2'],
   ['Developer', 'zervonex']
 ], quoted, { footer: '© zervonex' })
 ```
@@ -1522,7 +1522,7 @@ await sock.airich()
   .addText('## Hello World\nThis is *bold* and _italic_.')
   .addFOAText('# zervonex\n## Powered by @zervonex/baileys')
   .addTip('Always validate user input before processing.')
-  .addMetadata('Generated just now · NexusBot v2.2.7')
+  .addMetadata('Generated just now · zervonex v3.0.2')
   .send(jid)
 ```
 
@@ -1681,7 +1681,7 @@ await sock.sendLatex(jid, [
 ```javascript
 await sock.airich()
   .addPost({
-    title: 'NexusBot v2.2.7 🚀',
+    title: 'zervonex v3.0.2 🚀',
     username: 'nexustechpro2',
     subtitle: 'GitHub',
     thumbnail_url: 'https://example.com/thumb.jpg',
@@ -1693,7 +1693,7 @@ await sock.airich()
     is_verified: true
   })
   .addProduct({
-    title: 'NexusBot Premium',
+    title: 'zervonex Premium',
     brand: 'zervonex',
     price: '$9.99/mo',
     sale_price: '$4.99/mo',
@@ -1809,7 +1809,7 @@ await sock.airich()
     ['Enterprise', 'Custom', 'Unlimited']
   ])
   .addTask({ taskId: 't1', title: 'Bot online', status: 'DONE' })
-  .addMetadata('zervonex • v2.2.7 • 2026')
+  .addMetadata('zervonex • v3.0.2 • 2026')
   .addSuggest(['View commands', 'Get support', 'Upgrade plan'])
   .addFooterAction({ cta_text: '📖 View Dashboard', cta_type: 'OPEN_URL', cta_url: 'https://github.com/nexustechpro2' })
   .addFOAText('_Reply with any message to continue_')
@@ -2828,7 +2828,7 @@ await sock.sendA2UIMessage(jid, {
 
 // Command menu preset
 await sock.sendA2UICommandMenu(jid, {
-  title: 'NexusBot Menu',
+  title: 'zervonex Menu',
   rows: [
     ['!help', 'Show all commands'],
     ['!ping', 'Check bot status'],
