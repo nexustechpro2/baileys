@@ -8,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const CACHE_FILE = join(__dirname, '.cache.json')
 const PROTO_FILE = join(__dirname, 'WAProto.proto')
 
-const GITHUB_RAW = 'https://raw.githubusercontent.com/nexustechpro2/baileys/main/.wa-cache'
+const GITHUB_RAW = 'https://raw.githubusercontent.com/nexustechpro2/baileys/wa-cache'
 const CACHE_TTL = 24 * 60 * 60 * 1000
 
 const agent = new Agent({ connect: { family: 4 } })
