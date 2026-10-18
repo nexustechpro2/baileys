@@ -137,7 +137,7 @@
     "url-regex-safe": "^4.0.0",
     "uuid": "latest",
     "wa-sticker-formatter": "^4.4.4",
-    "whatsapp-rust-bridge": "latest",
+    "whatsapp-rust-bridge": "^0.5.5",
     "ws": "latest"
   },
   "devDependencies": {

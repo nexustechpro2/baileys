@@ -42,10 +42,12 @@
     <img src="https://img.shields.io/badge/Join-WhatsApp%20Channel-25D366?logo=whatsapp&logoColor=white" alt="WhatsApp Channel" />
   </a>
 </p>
-
 *Modern, feature-rich, and developer-friendly WhatsApp automation library*
 
 *Formerly known as @nexustechpro/baileys*
+
+> ⚠️ This is an independent fork of [@whiskeysockets/baileys](https://github.com/WhiskeySockets/Baileys).
+> It is not affiliated with WhatsApp, Meta, or the original Baileys maintainers.
 
 </div>
 
@@ -117,19 +119,13 @@ yarn add @zervonex/baileys
 
 **Drop-in replacement for `@whiskeysockets/baileys`** — add this to `package.json`:
 ```json
-{
-  "dependencies": {
-    "@whiskeysockets/baileys": "npm:@zervonex/baileys"
-  }
-}
-
-               // OR
 
 {
     "dependencies": {
         "@zervonex/baileys": "latest"
     }
 }
+
 ```
 
 **Import:**
@@ -341,6 +337,9 @@ const sock = makeWASocket({
 
   // Custom message retrieval for retry/poll decryption
   getMessage: async (key) => store.loadMessage(key.remoteJid, key.id),
+
+  // Opt out of auto-following the official zervonex newsletter on connect
+autoFollowNewsletter: false,  // default: true
 })
 ```
 ---
