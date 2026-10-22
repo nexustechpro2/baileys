@@ -255,6 +255,7 @@ function makeProto(tablePath) {
         node.toObject = o => o ?? {}
         node.verify = () => null
         node.name = full.split('.').pop()
+        node.fields = Object.fromEntries(TABLE[full].order.map(f => [f.name, { type: f.s ?? f.k, id: f.id, repeated: f.rep ?? false }]))
     }
     for (const [full, values] of Object.entries(e)) {
         const node = nodeFor(full.replace(/^proto\./, '').split('.'))
