@@ -138,8 +138,7 @@
     "uuid": "latest",
     "wa-sticker-formatter": "^4.4.4",
     "whatsapp-rust-bridge": "^0.5.5",
-    "ws": "latest",
-    "yarn": "^1.22.22"
+    "ws": "latest"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
