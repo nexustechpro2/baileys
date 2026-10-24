@@ -120,7 +120,7 @@
     "cache-manager": "latest",
     "fflate": "^0.8.2",
     "ffmpeg-static": "^5.3.0",
-    "file-type": "^22.0.1",
+    "file-type": "^22.2.0",
     "gradient-string": "^2.0.2",
     "keyv": "^5.6.0",
     "libphonenumber-js": "^1.13.3",
@@ -132,7 +132,7 @@
     "protobufjs": "latest",
     "qrcode-terminal": "^0.12.0",
     "rlottie": "^0.1.2",
-    "undici": "^8.10.1",
+    "undici": "^8.12.3",
     "unfurl.js": "^6.4.0",
     "url-regex-safe": "^4.0.0",
     "uuid": "latest",
@@ -157,7 +157,7 @@
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.4.0",
     "jest": "^29.0.0",
-    "jimp": "^1.6.0",
+    "jimp": "0.22.12",
     "jiti": "^2.4.2",
     "json": "^11.0.0",
     "lru-cache": "^11.1.0",
@@ -189,17 +189,32 @@
   },
   "overrides": {
     "wa-sticker-formatter": {
-      "sharp": "^0.33.5",
+      "sharp": "^0.35.5",
       "axios": "^1.6.0",
       "file-type": "^22.0.1",
       "image-size": "^2.0.0"
     },
     "jest": "^29.0.0",
     "tar": "^7.5.22",
-    "@tootallnate/once": "^3.0.1"
+    "@tootallnate/once": "^3.0.1",
+    "release-it": {
+      "undici": "^8.12.3",
+      "basic-ftp": "^6.2.3"
+    },
+    "jimp": {
+      "file-type": "^22.2.0"
+    },
+    "esbuild": "^0.28.2",
+    "basic-ftp": "^6.2.3",
+    "music-metadata": {
+      "file-type": "^22.2.0"
+    },
+    "@jimp/core": {
+      "file-type": "^22.2.0"
+    }
   },
   "resolutions": {
-    "wa-sticker-formatter/sharp": "^0.33.5",
+    "wa-sticker-formatter/sharp": "^0.35.5",
     "wa-sticker-formatter/axios": "^1.6.0",
     "wa-sticker-formatter/file-type": "^22.0.1",
     "wa-sticker-formatter/image-size": "^2.0.0",
