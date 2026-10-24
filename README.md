@@ -73,6 +73,7 @@
   - [AI Rich Messages](#ai-rich-messages)
   - [Status & Stories](#personal-status--story-statusbroadcast)
   - [Sticker Pack](#sticker-pack)
+    - [Premium Stickers](#premium-stickers)
   - [Shorthand Wrappers](#shorthand-wrappers)
 - [Message Modifications](#️-message-modifications)
 - [Media Download](#-media-download)
@@ -1361,6 +1362,23 @@ await sock.stickerPackMessage(jid, {
   ],
   cover: coverBuffer
 }, { quoted: message })
+```
+
+### Premium Stickers
+
+Pass `premium` on a single sticker:
+```js
+await sock.sendMessage(jid, { sticker: buffer, premium: 1 })
+```
+
+Per-sticker in a pack:
+```js
+await sock.sendMessage(jid, { stickerPack: { stickers: [{ data: buffer, emojis: ['🔥'], premium: 1 }] } })
+```
+
+Whole pack as premium:
+```js
+await sock.sendMessage(jid, { stickerPack: { premium: 1, stickers: [...] } })
 ```
 
 **Per-sticker options:**
