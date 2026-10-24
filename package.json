@@ -138,6 +138,9 @@
     "image-size": "^2.0.4",
     "sqlite3": "^6.0.1",
     "cacache": "^19.0.1",
+    "axios": "^1.6.0",
+    "file-type": "^22.2.0",
+    "sharp": "^0.35.5",
     "release-it": {
       "undici": "^8.12.3",
       "basic-ftp": "^6.2.3"
@@ -163,7 +166,10 @@
     "@tootallnate/once": "^3.0.1",
     "image-size": "^2.0.4",
     "sqlite3": "^6.0.1",
-    "cacache": "^19.0.1"
+    "cacache": "^19.0.1",
+    "axios": "^1.6.0",
+    "file-type": "^22.2.0",
+    "sharp": "^0.35.5"
   },
   "packageManager": "yarn@4.9.2",
   "engines": {
