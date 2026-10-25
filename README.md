@@ -443,6 +443,18 @@ await clearSession()
 
 `clearSession()` wipes every key belonging to that `sessionId` — creds, prekeys, sessions, sender keys, everything — using each backend's native namespace-scoped bulk delete (a real `deleteMany`/`DELETE WHERE`/`SCAN`+delete under the hood, not a per-key loop). It only affects this session; other sessions sharing the same backend are untouched. There's no equivalent method on `useMultiFileAuthState` — delete the session folder instead.
 
+#### Checking auth without loading full state
+
+```javascript
+import { hasKeyvAuth } from '@zervonex/baileys'
+
+// Check if a session has valid auth (lightweight — no full state load)
+const valid = await hasKeyvAuth('bot1', backend)
+// true if creds exist and contain noiseKey + signedIdentityKey
+```
+
+`hasKeyvAuth()` queries the backend using the correct Keyv namespace — the same way `useKeyvAuthState` does internally — so it always returns the right answer regardless of your backend. Useful for checking session ownership before deciding whether to restore a connection, without the overhead of initializing a full auth state.
+
 #### Options
 
 | Option | Type | Default | Description |
@@ -2979,6 +2991,7 @@ import {
   makeWASocket,
   useMultiFileAuthState,
   useKeyvAuthState,
+  hasKeyvAuth,
   makeCacheableSignalKeyStore,
   Browsers,
   DisconnectReason,
