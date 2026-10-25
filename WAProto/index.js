@@ -20,7 +20,20 @@ const isJsonValid = () => { try { const { m, t } = JSON.parse(readFileSync(TABLE
 function runInWorker(data) {
     return new Promise((resolve, reject) => {
         const w = new Worker(SELF, { workerData: data })
-        w.once('message', msg => { w.terminate(); msg.ok ? resolve() : reject(new Error(msg.error)) })
+        // Wait for the worker to fully exit before resolving — this ensures
+        // any file writes (renameSync inside the worker) are flushed to disk
+        // before the main thread calls _reloadProto() and reads those files.
+        w.once('message', msg => {
+            if (!msg.ok) {
+                w.terminate()
+                return reject(new Error(msg.error))
+            }
+            // Don't resolve yet — wait for the worker process to fully exit
+            // so its fs writes are guaranteed to be visible on the main thread.
+            w.once('exit', () => resolve())
+            w.once('error', reject)
+            // Graceful exit: worker is done, let it wind down naturally
+        })
         w.once('error', reject)
     })
 }
@@ -72,6 +85,9 @@ async function boot() {
 }
 
 if (!isMainThread) {
+    // ── Worker thread ──────────────────────────────────────────────────────────
+    // Runs when this file is spawned as a Worker. Handles proto compilation only;
+    // does NOT call boot() or touch exports.
     const { bundlePath, bundle, version, protoPath, tablePath } = workerData
     try {
         if (bundlePath || bundle) {
@@ -83,11 +99,19 @@ if (!isMainThread) {
             renameSync(tmp, protoPath)
         }
         await generateTable(protoPath, tablePath)
+        // Signal success, then exit cleanly so the main thread's runInWorker
+        // 'exit' listener fires only after all file-system writes are done.
         parentPort.postMessage({ ok: true })
     } catch (e) {
         parentPort.postMessage({ ok: false, error: e.message })
     }
 } else {
+    // ── Main thread ────────────────────────────────────────────────────────────
+    // Top-level await here blocks this ES module from settling until boot()
+    // fully completes — including the worker exiting and _reloadProto() running.
+    // Any importer of this module (e.g. socket.js) will correctly receive a
+    // fully-populated `proto` object because ESM top-level await propagates
+    // up the import graph.
     await boot()
 }
 
