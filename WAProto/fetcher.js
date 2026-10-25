@@ -42,7 +42,9 @@ export async function fetchProtoBundle() {
     const hash = await fetchFromGitHub('WAProto.bundle.js')
     if (cache.hash === hash) { writeCache({ version, hash }); removeTmp(); return { changed: false, bundle: null, version } }
     writeCache({ version, hash })
-    return { changed: true, bundlePath: BUNDLE_TMP, version }
+    const bundle = readFileSync(BUNDLE_TMP, 'utf8')
+    removeTmp()
+    return { changed: true, bundle, version }
 }
 
 export async function getWAVersion() {
