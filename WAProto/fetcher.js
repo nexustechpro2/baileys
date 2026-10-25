@@ -11,7 +11,7 @@ const PROTO_FILE = join(__dirname, 'WAProto.proto')
 const BUNDLE_TMP = join(__dirname, 'WAProto.bundle.tmp')
 const GITHUB_RAW = 'https://raw.githubusercontent.com/nexustechpro2/baileys/wa-cache'
 const CACHE_TTL = 24 * 60 * 60 * 1000
-const agent = new Agent({ connect: { family: 4 } })
+const agent = new Agent({ connect: { family: 4, timeout: 60000 } })
 
 const isCacheValid = (cache) => cache.version && cache.timestamp && (Date.now() - cache.timestamp) < CACHE_TTL
 const readCache = () => { try { return existsSync(CACHE_FILE) ? JSON.parse(readFileSync(CACHE_FILE, 'utf8')) : {} } catch { return {} } }
