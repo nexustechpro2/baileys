@@ -97,7 +97,7 @@
     "@keyv/mysql": "^2.1.10",
     "@keyv/postgres": "^2.2.3",
     "@keyv/redis": "^5.1.6",
-    "@keyv/sqlite": "^4.0.8",
+    "@keyv/sqlite": "^6.1.0",
     "acorn": "^8.18.0",
     "acorn-walk": "^8.3.5",
     "async-mutex": "^0.5.0",
