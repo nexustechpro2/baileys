@@ -50,33 +50,12 @@ function parseBundleSources(sources) {
     return nodes
 }
 
-function extractProtoSources(bundle) {
-    const out = [], targets = new Set(['"$InternalEnum"', '"WAProtoConst"'])
-    let i = 0
-    while (i < bundle.length) {
-        const start = bundle.indexOf('__d(', i)
-        if (start === -1) break
-        const ns = bundle.indexOf('"', start + 4)
-        const name = bundle.slice(ns, bundle.indexOf('"', ns + 1) + 1)
-        if (targets.has(name) || (name.startsWith('"WAWeb') && name.endsWith('.pb"'))) {
-            let depth = 0, j = start
-            while (j < bundle.length) {
-                if (bundle[j] === '(') depth++
-                else if (bundle[j] === ')' && --depth === 0) { out.push(bundle.slice(start, j + 1)); break }
-                j++
-            }
-            i = j + 1
-        } else i = start + 4
-    }
-    return out.length ? out : [bundle]
-}
-
 function filterProtoModules(allNodes) {
     return allNodes.filter(m => extractAllExpressions(m).find(e => e?.left?.property?.name === 'internalSpec'))
 }
 
 export function extractSchema(bundleSources) {
-    const allNodes = parseBundleSources(extractProtoSources(Array.isArray(bundleSources) ? bundleSources.join('') : bundleSources))
+    const allNodes = parseBundleSources(Array.isArray(bundleSources) ? bundleSources : [bundleSources])
     const modules = filterProtoModules(allNodes)
 
     const unspecName = n => n.endsWith('Spec') ? n.slice(0, -4) : n
