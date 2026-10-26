@@ -471,7 +471,6 @@ const valid = await hasKeyvAuth('bot1', backend)
 | `saveCreds` | ✅ | ✅ |
 | `getStats` | ✅ | ❌ |
 | `clearSession` | ❌ (delete the folder instead) | ✅ |
-| `close` | ❌ | ✅ (drops local listeners; safe to call, does not disconnect a shared backend) |
 
 ---
 
