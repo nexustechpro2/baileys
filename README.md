@@ -375,13 +375,17 @@ import { rm } from 'fs/promises'
 await rm('auth_session', { recursive: true, force: true })
 ```
 
+---
+
 ### Keyv-based (production)
 
-Universal adapter for any database backend via [Keyv](https://www.npmjs.com/package/keyv). Pass a connection string — the matching backend driver is resolved and cached automatically, no manual adapter imports needed.
+Universal adapter for any database backend via [Keyv](https://www.npmjs.com/package/keyv). Pass a connection string — the matching backend driver is resolved, instantiated, and **cached automatically per session** — no manual adapter imports needed.
 
 Both adapters use the same `BufferJSON` serialization format and auto-detect legacy `{ value: { value: ... } }` double-wrapping from older versions — no manual data migration needed when upgrading.
 
-The first argument is the **session ID** — equivalent to the folder name in `useMultiFileAuthState`. It is used as a Keyv namespace so multiple bots can safely share one backend without key collisions. The second argument is a connection string, a pre-built `Keyv` instance, or a raw `KeyvStoreAdapter`:
+The first argument is the **session ID** — equivalent to the folder name in `useMultiFileAuthState`. It is used as a Keyv namespace so multiple bots can safely share one backend without key collisions. The second argument is a connection string, a pre-built `Keyv` instance, or a raw `KeyvStoreAdapter`.
+
+#### Basic usage
 
 ```javascript
 import { useKeyvAuthState } from '@zervonex/baileys'
@@ -413,13 +417,25 @@ const { state, saveCreds } = await useKeyvAuthState('test')
 
 Supported protocols: `redis:`/`rediss:`, `mongodb:`/`mongodb+srv:`, `postgres:`/`postgresql:`, `mysql:`, `sqlite:`, `etcd:`, `memcache:`/`memcached:`. All matching driver packages ship as dependencies — nothing extra to install.
 
-For backends without a connection string (e.g. DynamoDB), or to share one connection across multiple sessions, pass a pre-built adapter or `Keyv` instance:
+#### How adapter caching works
+
+Connection strings are cached **per `conn::collection::sessionId`** — each session gets its own isolated adapter instance so `clearSession()` and namespace operations never bleed across sessions. Underlying database drivers (MongoDB, pg, mysql2, ioredis) manage their own internal connection pools, so multiple adapter instances pointing at the same URI still share one real connection — no connection explosion across 50+ sessions.
+
+```javascript
+// these two calls resolve to separate adapter instances but share one MongoDB connection internally
+const bot1 = await useKeyvAuthState('session_111', 'mongodb://localhost/baileys')
+const bot2 = await useKeyvAuthState('session_222', 'mongodb://localhost/baileys')
+```
+
+#### Sharing a pre-built adapter
+
+For backends without a connection string (e.g. DynamoDB), or when you need full control over the connection, pass a pre-built adapter or `Keyv` instance directly:
 
 ```javascript
 import KeyvMongo from '@keyv/mongo'
 import KeyvDynamo from '@keyv/dynamo'
 
-// share one connection across sessions
+// share one adapter instance across sessions
 const mongo = new KeyvMongo('mongodb://localhost/baileys')
 const { state: s1 } = await useKeyvAuthState('bot1', mongo)
 const { state: s2 } = await useKeyvAuthState('bot2', mongo)
@@ -429,7 +445,7 @@ const dynamo = new KeyvDynamo({ region: 'us-east-1', table: 'baileys_auth' })
 const { state, saveCreds } = await useKeyvAuthState('bot1', dynamo)
 ```
 
-Connection strings passed as plain strings are automatically cached and reused across every `useKeyvAuthState` call in the process — no need to build the instance yourself just to avoid duplicate connections.
+#### Custom collection/table name
 
 By default, Mongo/Postgres/MySQL/SQLite store everything in a collection/table named `keyv`. Pass `collectionName` to use your own:
 
@@ -439,17 +455,35 @@ const { state, saveCreds } = await useKeyvAuthState('bot1', 'mongodb://localhost
 })
 ```
 
-> Per-type backend routing (e.g. prekeys on SQLite, sessions on Postgres) is not currently supported — one `useKeyvAuthState` call uses one backend for all key types.
+#### Multi-backend routing
+
+Route different key types to different backends — e.g. keep creds on Postgres and prekeys on Redis:
+
+```javascript
+const { state, saveCreds, clearSession } = await useKeyvAuthState('bot1', {
+    'creds':                  'postgresql://user:pass@localhost/db',
+    'pre-key':                'redis://localhost:6379',
+    'session':                'redis://localhost:6379',
+    'app-state-sync-key':     'mongodb://localhost/baileys',
+    'app-state-sync-version': 'mongodb://localhost/baileys',
+    'sender-key':             'redis://localhost:6379',
+    'sender-key-memory':      'redis://localhost:6379',
+})
+```
+
+If a key type isn't listed in the map, the **first entry's backend** is used as the default. Backends that appear more than once in the map are deduplicated — one adapter instance, one connection.
+
+`clearSession()` on a multi-backend session clears all backends in the map, each scoped to that session's namespace only.
 
 #### Clearing a session (logout)
 
 ```javascript
 const { state, saveCreds, clearSession } = await useKeyvAuthState('bot1', 'redis://localhost:6379')
 
-await clearSession() // wipes all keys for this session, disconnects the store
+await clearSession() // wipes all keys for this session only — other sessions untouched
 ```
 
-`clearSession()` removes every key scoped to that session's namespace — creds, prekeys, sessions, sender keys, everything. Other sessions sharing the same backend are untouched.
+`clearSession()` removes every key scoped to that session's namespace — creds, prekeys, sessions, sender keys, app state, everything. Sessions sharing the same backend are never affected.
 
 #### Checking auth without loading full state
 
@@ -460,7 +494,7 @@ const valid = await hasKeyvAuth('bot1', backend)
 // true if creds exist and contain noiseKey + signedIdentityKey
 ```
 
-Lightweight — opens no full auth state, just checks for valid creds under the session's namespace.
+Lightweight — does not initialize full auth state, just checks for valid creds under the session's namespace. Accepts the same backend types as `useKeyvAuthState` including multi-backend maps (checks the first entry where creds live).
 
 #### Options
 
@@ -468,7 +502,7 @@ Lightweight — opens no full auth state, just checks for valid creds under the 
 |--------|------|---------|-------------|
 | `preKeyRetention` | `number` | `150` | Number of recent prekeys to keep |
 | `cleanupThreshold` | `number` | `50` | New prekeys generated before cleanup runs |
-| `collectionName` | `string` | `"keyv"` | Custom collection/table name (Keyv adapter only, ignored for in-memory and pre-built instances) |
+| `collectionName` | `string` | `"zervonex"` | Custom collection/table name — ignored for in-memory, pre-built instances, and backends without collection support (redis, etcd, memcache) |support (redis, etcd, memcache) |
 
 #### Return values
 
