@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@zervonex/baileys",
   "type": "module",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "Advanced WhatsApp Web API built on Baileys — interactive messages, buttons, carousels, products, events, payments, polls, albums, sticker packs and more.",
   "keywords": [
     "baileys",
@@ -101,8 +101,8 @@
     "acorn": "^8.18.0",
     "acorn-walk": "^8.3.5",
     "async-mutex": "^0.5.0",
-    "axios": "^1.6.0",
-    "cache-manager": "latest",
+    "axios": "^1.20.0",
+    "cache-manager": "^7.2.9",
     "fflate": "^0.8.2",
     "ffmpeg-static": "^5.3.0",
     "file-type": "^22.2.0",
@@ -114,21 +114,21 @@
     "p-queue": "^10.0.0",
     "pino": "^10.4.0",
     "prismjs": "^1.30.0",
-    "protobufjs": "latest",
+    "protobufjs": "^8.8.1",
     "qrcode-terminal": "^0.12.0",
     "rlottie": "^0.1.2",
     "undici": "^8.12.3",
     "unfurl.js": "^6.4.0",
     "url-regex-safe": "^4.0.0",
-    "uuid": "latest",
+    "uuid": "^14.0.3",
     "wa-sticker-formatter": "^4.4.4",
     "whatsapp-rust-bridge": "^0.5.5",
-    "ws": "latest"
+    "ws": "^8.22.0"
   },
   "overrides": {
     "wa-sticker-formatter": {
       "sharp": "^0.35.5",
-      "axios": "^1.6.0",
+      "axios": "^1.20.0",
       "file-type": "^22.2.0",
       "image-size": "^2.0.4"
     },
@@ -138,7 +138,7 @@
     "image-size": "^2.0.4",
     "sqlite3": "^6.0.1",
     "cacache": "^19.0.1",
-    "axios": "^1.6.0",
+    "axios": "^1.20.0",
     "file-type": "^22.2.0",
     "sharp": "^0.35.5",
     "release-it": {
@@ -159,7 +159,7 @@
   },
   "resolutions": {
     "wa-sticker-formatter/sharp": "^0.35.5",
-    "wa-sticker-formatter/axios": "^1.6.0",
+    "wa-sticker-formatter/axios": "^1.20.0",
     "wa-sticker-formatter/file-type": "^22.2.0",
     "wa-sticker-formatter/image-size": "^2.0.4",
     "tar": "^7.5.22",
@@ -167,7 +167,7 @@
     "image-size": "^2.0.4",
     "sqlite3": "^6.0.1",
     "cacache": "^19.0.1",
-    "axios": "^1.6.0",
+    "axios": "^1.20.0",
     "file-type": "^22.2.0",
     "sharp": "^0.35.5"
   },
