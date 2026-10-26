@@ -350,15 +350,14 @@ Two adapters are available. They do **not** share an identical return shape — 
 
 ### File-based (default)
 
-Atomic writes, sha256 checksum integrity, per-file mutex locking, corrupt file recovery, and legacy file upgrade. Best for single-instance bots or local development.
+Atomic writes (tmp → rename with fallback), corrupt file self-healing, and automatic old pre-key cleanup. Best for single-instance bots or local development.
 
 ```javascript
 import { useMultiFileAuthState } from '@zervonex/baileys'
 
 const { state, saveCreds, getStats } = await useMultiFileAuthState('auth_session', {
-    preKeyRetention:   150,  // how many recent prekeys to keep (default: 150)
-    cleanupThreshold:  50,   // new prekeys before a cleanup runs (default: 50)
-    logger,                  // optional — logs checksum mismatches and cleanup events
+    preKeyRetention:  150,  // how many recent prekeys to keep (default: 150)
+    cleanupThreshold: 50,   // new prekeys before a cleanup runs (default: 50)
 })
 
 const sock = makeWASocket({ auth: state })
@@ -369,15 +368,20 @@ const stats = await getStats()
 // { totalFiles: 42, preKeyCount: 150, nextPreKeyId: 3200, lastCleanupAt: '2026-07-05T...' }
 ```
 
-To fully log out and delete a session's files, remove the session folder directly (e.g. `fs.rm(folder, { recursive: true, force: true })`) — there is no `clearSession`/`close` method on this adapter.
+To fully log out and delete a session, remove the session folder directly — there is no `clearSession` method on this adapter:
+
+```javascript
+import { rm } from 'fs/promises'
+await rm('auth_session', { recursive: true, force: true })
+```
 
 ### Keyv-based (production)
 
-Universal adapter for any database backend via [Keyv](https://github.com/jaredwray/keyv). Pass a connection string — the matching backend driver is resolved and imported automatically, no manual adapter imports needed.
+Universal adapter for any database backend via [Keyv](https://www.npmjs.com/package/keyv). Pass a connection string — the matching backend driver is resolved and cached automatically, no manual adapter imports needed.
 
-Storage format matches `useMultiFileAuthState` exactly: every value is wrapped as `{ data, __checksum }` with a sha256 integrity check, so corruption is detected and self-healed the same way on both adapters. Reads also auto-detect and repair values that were written by an older/buggy version of this adapter (including arbitrarily nested `{ value: { value: ... } }` wrapping) — no manual data-fixing needed if you're upgrading from an earlier release.
+Both adapters use the same `BufferJSON` serialization format and auto-detect legacy `{ value: { value: ... } }` double-wrapping from older versions — no manual data migration needed when upgrading.
 
-The first argument is the **session ID** — equivalent to the folder name in `useMultiFileAuthState`. It's used as a Keyv namespace, so multiple bots can safely share one backend. The second argument is a connection string, a pre-built `Keyv` instance, or a raw `KeyvStoreAdapter`:
+The first argument is the **session ID** — equivalent to the folder name in `useMultiFileAuthState`. It is used as a Keyv namespace so multiple bots can safely share one backend without key collisions. The second argument is a connection string, a pre-built `Keyv` instance, or a raw `KeyvStoreAdapter`:
 
 ```javascript
 import { useKeyvAuthState } from '@zervonex/baileys'
@@ -407,52 +411,56 @@ const { state, saveCreds } = await useKeyvAuthState('bot1', 'memcache://localhos
 const { state, saveCreds } = await useKeyvAuthState('test')
 ```
 
-Supported connection string protocols: `redis:`/`rediss:`, `mongodb:`/`mongodb+srv:`, `postgres:`/`postgresql:`, `mysql:`, `sqlite:`, `etcd:`, `memcache:`/`memcached:`. All matching driver packages (`@keyv/redis`, `@keyv/mongo`, `@keyv/postgres`, `@keyv/mysql`, `@keyv/sqlite`, `@keyv/etcd`, `@keyv/memcache`) ship as regular dependencies of this package — nothing extra to install.
+Supported protocols: `redis:`/`rediss:`, `mongodb:`/`mongodb+srv:`, `postgres:`/`postgresql:`, `mysql:`, `sqlite:`, `etcd:`, `memcache:`/`memcached:`. All matching driver packages ship as dependencies — nothing extra to install.
 
-For backends without a connection string (e.g. DynamoDB), or to reuse one connection across multiple `useKeyvAuthState` calls yourself, pass a pre-built adapter or `Keyv` instance instead of a string:
+For backends without a connection string (e.g. DynamoDB), or to share one connection across multiple sessions, pass a pre-built adapter or `Keyv` instance:
 
 ```javascript
-import { useKeyvAuthState } from '@zervonex/baileys'
 import KeyvMongo from '@keyv/mongo'
+import KeyvDynamo from '@keyv/dynamo'
 
-const backend = new KeyvMongo('mongodb://localhost/baileys') // build once, share across sessions
-const { state, saveCreds } = await useKeyvAuthState('bot1', backend)
+// share one connection across sessions
+const mongo = new KeyvMongo('mongodb://localhost/baileys')
+const { state: s1 } = await useKeyvAuthState('bot1', mongo)
+const { state: s2 } = await useKeyvAuthState('bot2', mongo)
+
+// DynamoDB (no connection string protocol)
+const dynamo = new KeyvDynamo({ region: 'us-east-1', table: 'baileys_auth' })
+const { state, saveCreds } = await useKeyvAuthState('bot1', dynamo)
 ```
 
-Same connection string passed as a plain string is automatically cached and reused across every `useKeyvAuthState` call in the process — you don't need to build the instance yourself just to avoid opening duplicate connections, but you can if you want the reference for other purposes.
+Connection strings passed as plain strings are automatically cached and reused across every `useKeyvAuthState` call in the process — no need to build the instance yourself just to avoid duplicate connections.
 
-By default, Mongo/Postgres/MySQL/SQLite store everything in a collection/table named `keyv` (each adapter's own default). Set `collectionName` to use your own name instead — it's mapped to whatever each backend actually calls it (`collection` for Mongo, `table` for Postgres/MySQL/SQLite):
+By default, Mongo/Postgres/MySQL/SQLite store everything in a collection/table named `keyv`. Pass `collectionName` to use your own:
 
 ```javascript
 const { state, saveCreds } = await useKeyvAuthState('bot1', 'mongodb://localhost/baileys', {
-    collectionName: 'baileys_auth', // instead of the default "keyv" collection
+    collectionName: 'baileys_auth',
 })
 ```
 
-> Per-type backend routing (e.g. prekeys on SQLite, sessions on Postgres) is not currently supported — one `useKeyvAuthState` call uses one backend for every key type.
+> Per-type backend routing (e.g. prekeys on SQLite, sessions on Postgres) is not currently supported — one `useKeyvAuthState` call uses one backend for all key types.
 
 #### Clearing a session (logout)
 
 ```javascript
 const { state, saveCreds, clearSession } = await useKeyvAuthState('bot1', 'redis://localhost:6379')
 
-// on logout / when you want to wipe this session's auth entirely:
-await clearSession()
+await clearSession() // wipes all keys for this session, disconnects the store
 ```
 
-`clearSession()` wipes every key belonging to that `sessionId` — creds, prekeys, sessions, sender keys, everything — by calling `keyv.clear()` which removes all keys scoped to that session's namespace. Only this session's keys are removed; other sessions sharing the same backend are untouched. There is no equivalent method on `useMultiFileAuthState` — delete the session folder instead.
+`clearSession()` removes every key scoped to that session's namespace — creds, prekeys, sessions, sender keys, everything. Other sessions sharing the same backend are untouched.
 
 #### Checking auth without loading full state
 
 ```javascript
 import { hasKeyvAuth } from '@zervonex/baileys'
 
-// Check if a session has valid auth (lightweight — no full state load)
 const valid = await hasKeyvAuth('bot1', backend)
 // true if creds exist and contain noiseKey + signedIdentityKey
 ```
 
-`hasKeyvAuth()` queries the backend using the correct key prefix — the same way `useKeyvAuthState` does internally — so it always returns the right answer regardless of your backend. Useful for checking session ownership before deciding whether to restore a connection, without the overhead of initializing a full auth state.
+Lightweight — opens no full auth state, just checks for valid creds under the session's namespace.
 
 #### Options
 
@@ -460,8 +468,7 @@ const valid = await hasKeyvAuth('bot1', backend)
 |--------|------|---------|-------------|
 | `preKeyRetention` | `number` | `150` | Number of recent prekeys to keep |
 | `cleanupThreshold` | `number` | `50` | New prekeys generated before cleanup runs |
-| `logger` | `object` | `undefined` | Logger with `.info` / `.warn` methods |
-| `collectionName` | `string` | adapter's own default (`"keyv"`) | Custom collection/table name — Keyv-based adapter only, ignored for connection-string-less (in-memory) and pre-built adapter/`Keyv` instances |
+| `collectionName` | `string` | `"keyv"` | Custom collection/table name (Keyv adapter only, ignored for in-memory and pre-built instances) |
 
 #### Return values
 
