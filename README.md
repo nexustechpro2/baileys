@@ -377,7 +377,7 @@ Universal adapter for any database backend via [Keyv](https://github.com/jaredwr
 
 Storage format matches `useMultiFileAuthState` exactly: every value is wrapped as `{ data, __checksum }` with a sha256 integrity check, so corruption is detected and self-healed the same way on both adapters. Reads also auto-detect and repair values that were written by an older/buggy version of this adapter (including arbitrarily nested `{ value: { value: ... } }` wrapping) — no manual data-fixing needed if you're upgrading from an earlier release.
 
-The first argument is the **session ID** — equivalent to the folder name in `useMultiFileAuthState`. It's used as a key prefix (`sessionId::key`), so multiple bots can safely share one backend. The second argument is a connection string, a pre-built `Keyv` instance, or a raw `KeyvStoreAdapter`:
+The first argument is the **session ID** — equivalent to the folder name in `useMultiFileAuthState`. It's used as a Keyv namespace, so multiple bots can safely share one backend. The second argument is a connection string, a pre-built `Keyv` instance, or a raw `KeyvStoreAdapter`:
 
 ```javascript
 import { useKeyvAuthState } from '@zervonex/baileys'
@@ -440,7 +440,7 @@ const { state, saveCreds, clearSession } = await useKeyvAuthState('bot1', 'redis
 await clearSession()
 ```
 
-`clearSession()` wipes every key belonging to that `sessionId` — creds, prekeys, sessions, sender keys, everything — by iterating the store filtering by the `sessionId::` prefix and calling `deleteMany`. Only this session's keys are removed; other sessions sharing the same backend are untouched. There is no equivalent method on `useMultiFileAuthState` — delete the session folder instead.
+`clearSession()` wipes every key belonging to that `sessionId` — creds, prekeys, sessions, sender keys, everything — by calling `keyv.clear()` which removes all keys scoped to that session's namespace. Only this session's keys are removed; other sessions sharing the same backend are untouched. There is no equivalent method on `useMultiFileAuthState` — delete the session folder instead.
 
 #### Checking auth without loading full state
 
