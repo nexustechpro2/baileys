@@ -18,9 +18,9 @@ const SCALAR_TC = {
 const isLongLike = v => v !== null && typeof v === 'object' && 'low' in v && 'high' in v
 const longToBigInt = v => (v.unsigned ? BigInt(v.high >>> 0) : BigInt(v.high | 0)) * 4294967296n + BigInt(v.low >>> 0)
 const anyToBigInt = v => typeof v === 'bigint' ? v : isLongLike(v) ? longToBigInt(v) : BigInt(Math.trunc(Number(v)))
-const zigzagEncode = v => BigInt.asUintN(64, anyToBigInt(v) << 1n ^ anyToBigInt(v) >> 63n)
-const numOrBigInt = b => b <= 9007199254740991n && b >= -9007199254740991n ? Number(b) : b
+const zigzagEncode = v => { const b = anyToBigInt(v); return BigInt.asUintN(64, b << 1n ^ b >> 63n) }
 const toLong = big => Long.fromString(BigInt.asIntN(64, big).toString())
+const numOrBigInt = b => b <= 9007199254740991n && b >= -9007199254740991n ? Number(b) : toLong(b)
 const wireType = f => f.k === 'varint' ? 0 : f.k === 'i64' ? 1 : f.k === 'i32' ? 5 : 2
 
 const toBuffer = v => {
@@ -31,6 +31,15 @@ const toBuffer = v => {
     if (v instanceof Uint8Array) return Buffer.from(v)
     if (typeof v === 'object') return Buffer.from(JSON.stringify(v))
     return Buffer.alloc(0)
+}
+
+const anyToFloat = v => {
+    if (typeof v === 'number') return v
+    if (typeof v === 'bigint') return Number(v)
+    if (isLongLike(v)) return v.toNumber()
+    if (typeof v === 'string') return parseFloat(v)
+    if (v == null) return 0
+    return Number(v)
 }
 
 const B64_JSON = function () { return this.toString('base64') }
@@ -54,8 +63,8 @@ class Writer {
     vint(v) { typeof v === 'number' && v >= 0 && v <= MAXSAFE && Number.isInteger(v) ? this.varintNum(v) : this.varintBig(anyToBigInt(v)) }
     fixed32(v) { this._grow(4); const n = Number(BigInt.asUintN(32, anyToBigInt(v))) >>> 0; this.buf[this.len++] = n & 0xff; this.buf[this.len++] = (n >>> 8) & 0xff; this.buf[this.len++] = (n >>> 16) & 0xff; this.buf[this.len++] = (n >>> 24) & 0xff }
     fixed64(v) { this._grow(8); const b = Buffer.allocUnsafe(8); b.writeBigUInt64LE(BigInt.asUintN(64, anyToBigInt(v))); this.raw(b) }
-    float(v) { this._grow(4); const b = Buffer.allocUnsafe(4); b.writeFloatLE(v); this.raw(b) }
-    double(v) { this._grow(8); const b = Buffer.allocUnsafe(8); b.writeDoubleLE(v); this.raw(b) }
+    float(v) { this._grow(4); const b = Buffer.allocUnsafe(4); b.writeFloatLE(anyToFloat(v)); this.raw(b) }
+    double(v) { this._grow(8); const b = Buffer.allocUnsafe(8); b.writeDoubleLE(anyToFloat(v)); this.raw(b) }
     finish() { return Buffer.from(this.buf.buffer, this.buf.byteOffset, this.len) }
 }
 
@@ -152,7 +161,7 @@ function makeCodec(TABLE, enumIndex) {
                 if (f.s === 'zigzag') { const u = r.varintBig(); return numOrBigInt(u >> 1n ^ -(u & 1n)) }
                 if (f.s === 'zigzaglong') { const u = r.varintBig(); return toLong(u >> 1n ^ -(u & 1n)) }
                 if (f.s === 'enum') return r.varint() | 0
-                if (f.s === 'long') return toLong(BigInt(r.varint()))
+                if (f.s === 'long') return toLong(r.varintBig())
                 return r.varint()
             }
             case 'i64': { const b = Buffer.from(r.read8()); return f.s === 'double' ? b.readDoubleLE(0) : toLong(b.readBigUInt64LE(0)) }
@@ -189,7 +198,10 @@ function makeCodec(TABLE, enumIndex) {
                     if (f.rep) (obj[f.name] || (obj[f.name] = [])).push(val)
                     else obj[f.name] = val
                 }
-            } catch { break }
+            } catch (e) {
+                console.warn('[WAProto] decode error:', e.message)
+                break
+            }
         }
         return obj
     }
@@ -277,16 +289,17 @@ if (isGeneratorRun) {
 const tablePath = fileURLToPath(new URL('./WAProto.json', import.meta.url))
 const built = { proto: {}, codec: null }
 
+export let codec = null
 export function _reloadProto() {
     if (!existsSync(tablePath)) return
     const loaded = makeProto(tablePath)
     for (const key of Object.keys(built.proto)) delete built.proto[key]
     Object.assign(built.proto, loaded.proto)
     built.codec = loaded.codec
+    codec = loaded.codec
 }
 
 if (!isGeneratorRun && existsSync(tablePath)) _reloadProto()
 
 export const proto = built.proto
-export const codec = built.codec
 export default built
