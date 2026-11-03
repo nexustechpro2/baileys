@@ -2884,19 +2884,90 @@ await sock.sendVideoGridMessage(jid, {
 
 ### A2UI Builder
 
-Sends a WhatsApp A2UI bloksWidget interactive message. Use the command menu preset or build a fully custom component tree.
+Sends a WhatsApp A2UI bloksWidget interactive message. Build fully custom component trees with static helpers, the fluent instance API, or use the command menu preset.
+
+#### Static Helpers
 
 ```javascript
-// Generic A2UI envelope
-await sock.sendA2UIMessage(jid, {
-  bloksWidget: {
-    type: 'im_a2ui',
-    data: JSON.stringify({ version: 'v0.9', createSurface: { /* ... */ } })
-  },
-  nativeFlowMessage: { buttons: [{ name: 'single_select', buttonParamsJson: '...' }] }
-})
+import { A2UI } from '@zervonex/baileys'
 
-// Command menu preset
+A2UI.text('id', 'Hello!', { variant: 'h1' })
+A2UI.image('img', 'https://example.com/img.jpg', { variant: 'header', fit: 'cover' })
+A2UI.image('img', buffer)                          // Buffer also accepted
+A2UI.column('root', ['img', 'title'])
+A2UI.row('id', ['left', 'right'])
+A2UI.card('id', 'childId')
+A2UI.divider('id')
+A2UI.surface(components, { surfaceId, catalogId, version })
+```
+
+**Text variants:**
+
+| Variant | Description |
+|---------|-------------|
+| `body` | Default body text |
+| `h1`–`h5` | Heading levels |
+| `caption` | Small caption text |
+
+---
+
+#### Fluent Instance Builder
+
+```javascript
+await new A2UI(sock)
+  .addColumn('root', ['img', 'title'])
+  .addImage('img', 'https://example.com/img.jpg')  // URL, Buffer, or file path
+  .addText('title', 'Hello!', { variant: 'h1' })
+  .addRow('id', ['left', 'right'])
+  .addCard('id', 'childId')
+  .addDivider('id')
+  .addButton('quick_reply', { display_text: 'Hi', id: 'hi' })
+  .setFallback('Fallback text for unsupported clients')
+  .setSurfaceId('my-custom-surface-id')
+  .setImage(buffer)                                 // image header — URL or Buffer
+  .send(jid)
+```
+
+---
+
+#### sock.sendA2UI Shortcut
+
+```javascript
+await sock.sendA2UI(jid, [
+  A2UI.column('root', ['img', 'title']),
+  A2UI.image('img', 'https://example.com/img.jpg'),
+  A2UI.text('title', 'Hello!', { variant: 'h1' })
+], {
+  buttons: [
+    { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Hi', id: 'hi' }) }
+  ]
+})
+```
+
+---
+
+#### sendMessage Dispatch
+
+```javascript
+await sock.sendMessage(jid, {
+  a2uiMessage: {
+    components: [
+      A2UI.column('root', ['img', 'title']),
+      A2UI.image('img', buffer),                    // Buffer also accepted
+      A2UI.text('title', 'Hello!', { variant: 'h1' })
+    ],
+    buttons: [
+      { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Hi', id: 'hi' }) }
+    ]
+  }
+})
+```
+
+---
+
+#### Command Menu Preset
+
+```javascript
 await sock.sendA2UICommandMenu(jid, {
   title: 'zervonex Menu',
   rows: [
@@ -2911,11 +2982,23 @@ await sock.sendA2UICommandMenu(jid, {
 })
 ```
 
+---
+
+#### Generic Envelope (Advanced)
+
+```javascript
+await sock.sendA2UIMessage(jid, {
+  bloksWidget: {
+    type: 'im_a2ui',
+    data: JSON.stringify({ version: 'v0.9', createSurface: { /* ... */ } })
+  },
+  nativeFlowMessage: { buttons: [{ name: 'single_select', buttonParamsJson: '...' }] }
+})
+```
+
 **A2UI row format:** `[command, description]` or `{ title, description, id }`
 
 **A2UI button format:** `{ text, url }` or `{ label, url }`
-
----
 
 ### Poll Builder
 
