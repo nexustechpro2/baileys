@@ -8,6 +8,7 @@
 # @zervonex/baileys
 
 <p>
+<a href="https://www.npmjs.com/package/@zervonex/baileys">
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="100%">
 </p>
 
@@ -1955,8 +1956,9 @@ await sock.sendUnifiedResponse(jid, sections, submessages, options)
 await sock.sendVerticalAlbumMessage(jid, { items: [...] })
 await sock.sendGridImageMessage(jid, { imageUrls: [...] })
 await sock.sendVideoGridMessage(jid, { videos: [...] })
+await sock.sendA2UI(jid, components, opts)
 await sock.sendA2UIMessage(jid, { bloksWidget, nativeFlowMessage })
-await sock.sendA2UICommandMenu(jid, { title, rows, buttons, imageMessage })
+await sock.sendA2UICommandMenu(jid, { title, rows, buttons, footer, image })
 ```
 
 ---
@@ -2886,57 +2888,95 @@ await sock.sendVideoGridMessage(jid, {
 
 Sends a WhatsApp A2UI bloksWidget interactive message. Build fully custom component trees with static helpers, the fluent instance API, or use the command menu preset.
 
+> ⚠️ The A2UI catalog (`v0.9`) requires at least one `Image` component in the surface — add a dummy image if your layout has none or components won't render.
+
+> ⚠️ `Video` and `AudioPlayer` components are defined in the catalog spec but are not yet rendered by the WhatsApp client.
+
 #### Static Helpers
 
 ```javascript
 import { A2UI } from '@zervonex/baileys'
 
 A2UI.text('id', 'Hello!', { variant: 'h1' })
-A2UI.image('img', 'https://example.com/img.jpg', { variant: 'header', fit: 'cover' })
-A2UI.image('img', buffer)                          // Buffer also accepted
-A2UI.column('root', ['img', 'title'])
-A2UI.row('id', ['left', 'right'])
+// variants: h1 | h2 | h3 | h4 | h5 | caption | body
+
+A2UI.image('id', 'https://example.com/img.jpg', { variant: 'header', fit: 'cover' })
+A2UI.image('id', buffer)           // Buffer, file path, or URL all accepted
+// variants: icon | avatar | smallFeature | mediumFeature | largeFeature | header
+// fits: contain | cover | fill | none | scaleDown
+
+A2UI.icon('id', 'send')            // must be a valid catalog icon name
+A2UI.video('id', 'https://example.com/video.mp4')
+A2UI.audio('id', 'https://example.com/audio.mp3', { description: 'Track' })
+
+A2UI.column('id', ['child1', 'child2'], { justify: 'start', align: 'stretch' })
+A2UI.row('id', ['left', 'right'], { justify: 'spaceEvenly', align: 'center' })
+A2UI.list('id', ['item1', 'item2'], { direction: 'vertical', align: 'stretch' })
 A2UI.card('id', 'childId')
-A2UI.divider('id')
+A2UI.tabs('id', [
+    { title: 'Tab 1', child: 'tab1_content' },
+    { title: 'Tab 2', child: 'tab2_content' }
+])
+A2UI.modal('id', 'triggerButtonId', 'contentId')
+A2UI.divider('id', { axis: 'horizontal' })  // axis: horizontal | vertical
+A2UI.button('id', 'childId', { call: 'openUrl', args: { url: 'https://example.com' } }, { variant: 'primary' })
+// variants: primary | borderless (default not supported in modal trigger)
+
+A2UI.textField('id', 'Label', { value: '', variant: 'shortText' })
+// variants: shortText | longText | number | obscured
+
+A2UI.checkBox('id', 'Label', false)
+A2UI.choicePicker('id',
+    [{ label: 'Option A', value: 'a' }, { label: 'Option B', value: 'b' }],
+    ['a'],
+    { label: 'Pick one', variant: 'mutuallyExclusive', displayStyle: 'chips' }
+)
+// variants: mutuallyExclusive | multipleSelection
+// displayStyle: checkbox | chips
+
+A2UI.slider('id', 5, 10, { label: 'Rating', min: 1 })
+A2UI.dateTimeInput('id', '', { label: 'Date', enableDate: true, enableTime: false })
+
 A2UI.surface(components, { surfaceId, catalogId, version })
 ```
-
-**Text variants:**
-
-| Variant | Description |
-|---------|-------------|
-| `body` | Default body text |
-| `h1`–`h5` | Heading levels |
-| `caption` | Small caption text |
-
----
 
 #### Fluent Instance Builder
 
 ```javascript
 await new A2UI(sock)
-  .addColumn('root', ['img', 'title'])
-  .addImage('img', 'https://example.com/img.jpg')  // URL, Buffer, or file path
+  .addColumn('root', ['img', 'title', 'dummy'])
+  .addImage('img', 'https://example.com/img.jpg', { variant: 'header', fit: 'cover' })
   .addText('title', 'Hello!', { variant: 'h1' })
-  .addRow('id', ['left', 'right'])
-  .addCard('id', 'childId')
-  .addDivider('id')
-  .addButton('quick_reply', { display_text: 'Hi', id: 'hi' })
+  .addDivider('div1')
+  .addCard('card1', 'card_col')
+  .addColumn('card_col', ['card_text'])
+  .addText('card_text', 'Card content', { variant: 'body' })
+  .addTabs('tabs1', [
+      { title: 'Tab A', child: 'tabA' },
+      { title: 'Tab B', child: 'tabB' }
+  ])
+  .addModal('modal1', 'modal_btn', 'modal_content')
+  .addText('modal_btn_text', 'Open Modal')
+  .addButtonComponent('modal_btn', 'modal_btn_text', { call: 'openModal', args: { modalId: 'modal1' } }, { variant: 'primary' })
+  .addCard('modal_content', 'modal_col')
+  .addColumn('modal_col', ['modal_text'])
+  .addText('modal_text', 'Modal body', { variant: 'body' })
+  .addImage('dummy', 'https://example.com/img.jpg', { variant: 'avatar', fit: 'cover' })
+  .addButton('quick_reply', { display_text: 'Reply', id: 'reply_id' })
   .setFallback('Fallback text for unsupported clients')
   .setSurfaceId('my-custom-surface-id')
-  .setImage(buffer)                                 // image header — URL or Buffer
+  .setImage('https://example.com/header.jpg')  // URL, Buffer, or file path
   .send(jid)
 ```
-
----
 
 #### sock.sendA2UI Shortcut
 
 ```javascript
 await sock.sendA2UI(jid, [
-  A2UI.column('root', ['img', 'title']),
-  A2UI.image('img', 'https://example.com/img.jpg'),
-  A2UI.text('title', 'Hello!', { variant: 'h1' })
+  A2UI.column('root', ['img', 'title', 'dummy']),
+  A2UI.image('img', 'https://example.com/img.jpg', { variant: 'header' }),
+  A2UI.text('title', 'Hello!', { variant: 'h1' }),
+  A2UI.image('dummy', 'https://example.com/img.jpg', { variant: 'avatar' })
 ], {
   buttons: [
     { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Hi', id: 'hi' }) }
@@ -2944,17 +2984,16 @@ await sock.sendA2UI(jid, [
 })
 ```
 
----
-
 #### sendMessage Dispatch
 
 ```javascript
 await sock.sendMessage(jid, {
   a2uiMessage: {
     components: [
-      A2UI.column('root', ['img', 'title']),
-      A2UI.image('img', buffer),                    // Buffer also accepted
-      A2UI.text('title', 'Hello!', { variant: 'h1' })
+      A2UI.column('root', ['img', 'title', 'dummy']),
+      A2UI.image('img', buffer),
+      A2UI.text('title', 'Hello!', { variant: 'h1' }),
+      A2UI.image('dummy', buffer, { variant: 'avatar' })
     ],
     buttons: [
       { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Hi', id: 'hi' }) }
@@ -2962,8 +3001,6 @@ await sock.sendMessage(jid, {
   }
 })
 ```
-
----
 
 #### Command Menu Preset
 
@@ -2978,11 +3015,10 @@ await sock.sendA2UICommandMenu(jid, {
   buttons: [
     { text: 'GitHub', url: 'https://github.com/nexustechpro2' }
   ],
-  footer: 'Powered by zervonex'
+  footer: 'Powered by zervonex',
+  image: 'https://example.com/header.jpg'  // optional — URL, Buffer, or file path
 })
 ```
-
----
 
 #### Generic Envelope (Advanced)
 
@@ -2999,6 +3035,8 @@ await sock.sendA2UIMessage(jid, {
 **A2UI row format:** `[command, description]` or `{ title, description, id }`
 
 **A2UI button format:** `{ text, url }` or `{ label, url }`
+
+**Valid icon names:** `accountCircle` `add` `arrowBack` `arrowForward` `attachFile` `calendarToday` `call` `camera` `check` `close` `delete` `download` `edit` `event` `error` `fastForward` `favorite` `favoriteOff` `folder` `help` `home` `info` `locationOn` `lock` `lockOpen` `mail` `menu` `moreVert` `moreHoriz` `notificationsOff` `notifications` `pause` `payment` `person` `phone` `photo` `play` `print` `refresh` `rewind` `search` `send` `settings` `share` `shoppingCart` `skipNext` `skipPrevious` `star` `starHalf` `starOff` `stop` `upload` `visibility` `visibilityOff` `volumeDown` `volumeMute` `volumeOff` `volumeUp` `warning`
 
 ### Poll Builder
 
