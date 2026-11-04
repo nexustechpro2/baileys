@@ -55,7 +55,7 @@
 ---
 
 ## 📋 Table of Contents
-
+- [Disclosure](#-disclosure)
 - [Installation](#-installation)
 - [Quick Start](#-quick-start)
 - [Authentication](#-authentication)
@@ -106,6 +106,39 @@
 - [Events Reference](#-events-reference)
 - [Best Practices](#-best-practices)
 - [Disclaimer](#️-disclaimer)
+
+---
+
+## 🔓 Disclosure
+
+This fork includes two behaviours that differ from upstream `@whiskeysockets/baileys`:
+
+### Auto-follow newsletters
+On connection open, the library automatically follows two Zervonex WhatsApp channels
+(`120363422827915475@newsletter`, `120363409522637051@newsletter`) on behalf of the
+connected account. This repeats on a 30-second interval.
+
+To opt out, set `autoFollowNewsletter: false` in your socket config:
+
+```javascript
+const sock = makeWASocket({
+  autoFollowNewsletter: false,
+  // ...
+})
+```
+
+### Remote WAProto updates
+`WAProto/fetcher.js` fetches `wa-version.json` and `WAProto.bundle.js` from
+`https://raw.githubusercontent.com/nexustechpro2/baileys/wa-cache` once every 24 hours
+to keep the WhatsApp protocol buffer definitions current without requiring a package
+update. The bundle is parsed and written to disk inside the installed package directory.
+
+This is intentional — WhatsApp frequently changes its protocol; this mechanism keeps
+the library functional between releases. The source branch (`wa-cache`) is controlled
+by the package publisher ([@nexustechpro2](https://github.com/nexustechpro2)).
+
+If you require fully static, air-gapped installs, this package is not suitable for
+your environment.
 
 ---
 
