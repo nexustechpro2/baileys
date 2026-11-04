@@ -24,6 +24,10 @@
   <a href="https://www.npmjs.com/package/@zervonex/baileys">
     <img src="https://img.shields.io/npm/dt/@zervonex/baileys?color=blue&logo=npm&style=flat-square" alt="Downloads" />
   </a>
+  <!-- Security Disclosure Badge -->
+  <a href="./SECURITY.md">
+  <img src="https://img.shields.io/badge/Security-Disclosure-blue?style=flat-square" alt="Security Disclosure" />
+</a>
   <!-- License -->
   <a href="https://github.com/nexustechpro2/baileys/blob/main/LICENSE">
     <img src="https://img.shields.io/npm/l/@zervonex/baileys?color=yellow&style=flat-square" alt="License" />
