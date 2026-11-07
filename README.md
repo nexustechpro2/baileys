@@ -3189,6 +3189,7 @@ import {
   useMultiFileAuthState,
   useKeyvAuthState,
   hasKeyvAuth,
+  clearAdapterCache,
   makeCacheableSignalKeyStore,
   Browsers,
   DisconnectReason,
