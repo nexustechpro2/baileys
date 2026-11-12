@@ -79,7 +79,7 @@
   - [Status & Stories](#personal-status--story-statusbroadcast)
   - [Sticker Pack](#sticker-pack)
     - [Premium Stickers](#premium-stickers)
-  -[Associated Flows](#associated-flows)
+  - [Associated Flows](#associated-flows)
   - [Shorthand Wrappers](#shorthand-wrappers)
 - [Message Modifications](#️-message-modifications)
 - [Media Download](#-media-download)
