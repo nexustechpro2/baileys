@@ -258,16 +258,34 @@ function makeProto(tablePath) {
     const codec = makeCodec(TABLE, e)
     const proto = {}
     const nodeFor = path => { let c = proto; for (const p of path) c = c[p] ?? (c[p] = {}); return c }
+    const reorder = (full, o) => {
+        if (!o || typeof o !== 'object') return o ?? {}
+        const T = TABLE[full]
+        if (!T) return o
+        const result = {}
+        for (const f of T.order) {
+            if (!(f.name in o) || o[f.name] == null) continue
+            if (o[f.name] === '') continue
+            if (f.k === 'msg' && f.msg && typeof o[f.name] === 'object') {
+                result[f.name] = Array.isArray(o[f.name])
+                    ? o[f.name].map(item => reorder(f.msg, item))
+                    : reorder(f.msg, o[f.name])
+            } else {
+                result[f.name] = o[f.name]
+            }
+        }
+        return result
+    }
     for (const full of Object.keys(t)) {
         const node = nodeFor(full.replace(/^proto\./, '').split('.'))
         node.encode = o => ({ finish: () => codec.encode(full, o ?? {}) })
         node.decode = b => codec.decode(full, b)
-        node.create = o => o ?? {}
-        node.fromObject = o => o ?? {}
+        node.create = o => reorder(full, o)
+        node.fromObject = o => reorder(full, o)
         node.toObject = o => o ?? {}
         node.verify = () => null
         node.name = full.split('.').pop()
-        node.fields = Object.fromEntries(TABLE[full].order.map(f => [f.name, { type: f.s ?? f.k, id: f.id, repeated: f.rep ?? false }]))
+        node.fields = Object.fromEntries(TABLE[full].order.map(f => [f.name, { type: f.s ?? f.k, id: f.id, repeated: f.rep ?? false, ...(f.msg && { msgType: f.msg.split('.').pop() }) }]))
     }
     for (const [full, values] of Object.entries(e)) {
         const node = nodeFor(full.replace(/^proto\./, '').split('.'))
