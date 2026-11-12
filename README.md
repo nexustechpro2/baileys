@@ -79,6 +79,7 @@
   - [Status & Stories](#personal-status--story-statusbroadcast)
   - [Sticker Pack](#sticker-pack)
     - [Premium Stickers](#premium-stickers)
+  -[Associated Flows](#associated-flows)
   - [Shorthand Wrappers](#shorthand-wrappers)
 - [Message Modifications](#️-message-modifications)
 - [Media Download](#-media-download)
@@ -94,6 +95,7 @@
 - [Newsletter / Channels](#-newsletter--channels)
 - [Builder API](#-builder-api)
   - [AIRich Builder](#airich-builder)
+    - [HTML Primitives](#html-primitives)
   - [Button Builder](#button-builder)
   - [Carousel Builder](#carousel-builder)
   - [Album Builder](#album-builder)
@@ -604,6 +606,53 @@ Every key you can pass to `sock.sendMessage`:
 | `pollResultMessage` | Poll result snapshot |
 | `deliveryMode` | Controls which devices receive the message — see Delivery Mode section |
 | `ai` | Mark message as AI-generated (injects bot label + supportPayload) |
+| `react` | Emoji reaction |
+| `keep` | Keep / unkeep a message |
+| `groupInvite` | Group invite message |
+| `inviteAdmin` | Newsletter admin invite |
+| `requestPhoneNumber` | Request phone number |
+| `sharePhoneNumber` | Share your phone number |
+| `limitSharing` | Limit sharing setting |
+| `disappearingMessagesInChat` | Set disappearing timer |
+| `liveLocationMessage` | Live location |
+| `reactionMessage` | Reaction (proto passthrough) |
+| `locationMessage` | Location (proto passthrough) |
+| `contactMessage` | Contact (proto passthrough) |
+| `scheduledCallCreationMessage` | Scheduled call |
+| `scheduledCallEditMessage` | Edit scheduled call |
+| `pinInChatMessage` | Pin (proto passthrough) |
+| `keepInChatMessage` | Keep (proto passthrough) |
+| `listResponseMessage` | List reply |
+| `buttonsResponseMessage` | Buttons reply |
+| `templateButtonReplyMessage` | Template button reply |
+| `encReactionMessage` | Encrypted reaction |
+| `encCommentMessage` | Encrypted comment |
+| `encEventResponseMessage` | Encrypted event response |
+| `invoiceMessage` | Invoice |
+| `paymentInviteMessage` | Payment invite |
+| `cancelPaymentRequestMessage` | Cancel payment request |
+| `declinePaymentRequestMessage` | Decline payment request |
+| `statusNotificationMessage` | Status notification |
+| `statusQuotedMessage` | Status quoted |
+| `statusQuestionAnswerMessage` | Status question answer |
+| `statusStickerInteractionMessage` | Status sticker interaction |
+| `newsletterAdminInviteMessage` | Newsletter admin invite (proto passthrough) |
+| `newsletterFollowerInviteMessageV2` | Newsletter follower invite |
+| `pollCreationMessage` | Poll creation (proto passthrough) |
+| `pollCreationMessageV2` | Poll creation V2 |
+| `pollCreationMessageV3` | Poll creation V3 |
+| `pollCreationMessageV5` | Poll creation V5 (quiz) |
+| `pollCreationMessageV6` | Poll creation V6 |
+| `bcallMessage` | B2B call |
+| `conditionalRevealMessage` | Conditional reveal |
+| `eventInviteMessage` | Event invite |
+| `requestLocationMessage` | Request location |
+| `requestLocationUpdateMessage` | Request location update |
+| `splitPaymentUpdateMessage` | Split payment update |
+| `secretEncryptedMessage` | Secret encrypted |
+| `placeholderMessage` | Placeholder |
+| `questionResponseMessage` | Question response |
+| `vpcRequestMessage` | VPC request |
 
 ---
 
@@ -1132,12 +1181,13 @@ await sock.sendMessage(jid, {
 
 | Value | Type | Description |
 |-------|------|-------------|
-| `0` | EMPTY | No header |
-| `1` | TEXT | Text header |
-| `2` | DOCUMENT | Document header |
-| `3` | IMAGE | Image header |
-| `4` | VIDEO | Video header |
-| `5` | LOCATION | Location header |
+| `0` | UNKNOWN | Unknown |
+| `1` | EMPTY | No header |
+| `2` | TEXT | Text header |
+| `3` | DOCUMENT | Document header |
+| `4` | IMAGE | Image header |
+| `5` | VIDEO | Video header |
+| `6` | LOCATION | Location header |
 
 **Button Types:**
 
@@ -1514,7 +1564,284 @@ await sock.sendMessage(jid, { stickerPack: { premium: 1, stickers: [...] } })
 
 ---
 
----
+### Associated Flows
+
+Multi-message flows that send a parent message followed by linked child messages.
+Each flow sends a parent first, then linked child messages automatically.
+All media fields accept a `Buffer`, file path, URL string, or `{ url }` object.
+
+```js
+// ── Motion Photo — still image + short video clip ─────────────────────────────
+await sock.sendMessage(jid, {
+    motionPhoto: {
+        items: [
+            { image: { url: 'https://example.com/still.jpg' } },
+            { video: { url: 'https://example.com/motion.mp4' } }
+        ]
+    }
+})
+
+// ── HD Video — SD version + HD version ───────────────────────────────────────
+await sock.sendMessage(jid, {
+    hdVideoDualUpload: {
+        items: [
+            { video: { url: 'https://example.com/sd.mp4' } },
+            { video: { url: 'https://example.com/hd.mp4' } }
+        ]
+    }
+})
+
+// ── HD Image — preview + HD version ──────────────────────────────────────────
+await sock.sendMessage(jid, {
+    hdImageDualUpload: {
+        items: [
+            { image: { url: 'https://example.com/preview.jpg' } },
+            { image: { url: 'https://example.com/hd.jpg' } }
+        ]
+    }
+})
+
+// ── HEVC Video — original + HEVC encoded ─────────────────────────────────────
+await sock.sendMessage(jid, {
+    hevcVideoDualUpload: {
+        items: [
+            { video: { url: 'https://example.com/original.mp4' } },
+            { video: { url: 'https://example.com/hevc.mp4' } }
+        ]
+    }
+})
+
+// ── AV1 Video — original + AV1 encoded ───────────────────────────────────────
+await sock.sendMessage(jid, {
+    av1VideoDualUpload: {
+        items: [
+            { video: { url: 'https://example.com/original.mp4' } },
+            { video: { url: 'https://example.com/av1.mp4' } }
+        ]
+    }
+})
+
+// ── Streamed HD Video — SD stream + HD stream ─────────────────────────────────
+await sock.sendMessage(jid, {
+    streamedHdVideoDualUpload: {
+        items: [
+            { video: { url: 'https://example.com/sd-stream.mp4' } },
+            { video: { url: 'https://example.com/hd-stream.mp4' } }
+        ]
+    }
+})
+
+// ── Original Video — processed version + original ────────────────────────────
+await sock.sendMessage(jid, {
+    originalVideoDualUpload: {
+        items: [
+            { video: { url: 'https://example.com/processed.mp4' } },
+            { video: { url: 'https://example.com/original.mp4' } }
+        ]
+    }
+})
+
+// ── Original Image — processed version + original ────────────────────────────
+await sock.sendMessage(jid, {
+    originalImageDualUpload: {
+        items: [
+            { image: { url: 'https://example.com/processed.jpg' } },
+            { image: { url: 'https://example.com/original.jpg' } }
+        ]
+    }
+})
+
+// ── Media Album — group of images and videos ──────────────────────────────────
+await sock.sendMessage(jid, {
+    mediaAlbum: {
+        items: [
+            { image: { url: 'https://example.com/1.jpg' }, caption: 'First' },
+            { image: { url: 'https://example.com/2.jpg' } },
+            { video: { url: 'https://example.com/3.mp4' }, caption: 'Last' }
+        ]
+    }
+})
+
+// ── Image Poll — poll where each option has an image ─────────────────────────
+// (uses the poll handler — no mediaPoll key needed)
+await sock.sendMessage(jid, {
+    poll: {
+        name: 'Which looks better?',
+        values: [
+            { name: 'Option A', image: { url: 'https://example.com/a.jpg' } },
+            { name: 'Option B', image: { url: 'https://example.com/b.jpg' } }
+        ],
+        selectableCount: 1
+    }
+})
+
+// ── Event Cover Image — event message + cover photo ───────────────────────────
+await sock.sendMessage(jid, {
+    eventCoverImage: {
+        items: [
+            { event: { name: 'My Event', startDate: new Date(Date.now() + 86400_000), description: '...' } },
+            { image: { url: 'https://example.com/cover.jpg' } }
+        ]
+    }
+})
+
+// ── Sticker Annotation — image with sticker overlaid ─────────────────────────
+await sock.sendMessage(jid, {
+    stickerAnnotation: {
+        items: [
+            { image: { url: 'https://example.com/photo.jpg' } },
+            { sticker: { url: 'https://example.com/sticker.webp' } }
+        ]
+    }
+})
+
+// ── Poll Add Option — add a new option to an already-sent poll ────────────────
+// (standalone message — no items array)
+await sock.sendMessage(jid, {
+    pollAddOptionMessage: {
+        pollCreationMessageKey: existingPollMsg.key,
+        addOption: { optionName: 'New Option' }
+    }
+})
+
+// ── Status Poll — poll attached to a status ───────────────────────────────────
+await sock.sendMessage('status@broadcast', {
+    statusPoll: {
+        items: [
+            { poll: { name: 'Vote!', values: ['Yes', 'No'], selectableCount: 1 } },
+            { image: { url: 'https://example.com/status-bg.jpg' } }
+        ]
+    }
+})
+
+// ── Status Add Yours — add yours sticker response ─────────────────────────────
+await sock.sendMessage('status@broadcast', {
+    statusAddYours: {
+        items: [
+            { image: { url: 'https://example.com/status.jpg' } },
+            { text: 'Add yours!' }
+        ]
+    }
+})
+
+// ── Status Question — question sticker on a status ────────────────────────────
+await sock.sendMessage('status@broadcast', {
+    statusQuestion: {
+        items: [
+            { image: { url: 'https://example.com/status.jpg' } },
+            { text: 'Ask me anything!' }
+        ]
+    }
+})
+
+// ── Status Reaction — reaction to a status ────────────────────────────────────
+await sock.sendMessage('status@broadcast', {
+    statusReaction: {
+        items: [
+            { image: { url: 'https://example.com/status.jpg' } },
+            { react: { text: '❤️', key: targetStatus.key } }
+        ]
+    }
+})
+
+// ── Status External Reshare — reshared external content ──────────────────────
+await sock.sendMessage('status@broadcast', {
+    statusExternalReshare: {
+        items: [
+            { image: { url: 'https://example.com/shared.jpg' } },
+            { text: 'Check this out!' }
+        ]
+    }
+})
+
+// ── Status Link Action — link action card on a status ────────────────────────
+await sock.sendMessage('status@broadcast', {
+    statusLinkAction: {
+        items: [
+            { image: { url: 'https://example.com/status.jpg' } },
+            { text: 'https://example.com' }
+        ]
+    }
+})
+
+// ── Status Notification — notification linked to a status ────────────────────
+await sock.sendMessage('status@broadcast', {
+    statusNotification: {
+        items: [
+            { image: { url: 'https://example.com/status.jpg' } },
+            { text: 'New update!' }
+        ]
+    }
+})
+
+// ── Status Add Yours AI Imagine — AI-generated imagine response ───────────────
+await sock.sendMessage('status@broadcast', {
+    statusAddYoursAiImagine: {
+        items: [
+            { image: { url: 'https://example.com/ai-generated.jpg' } },
+            { text: 'Imagined with AI' }
+        ]
+    }
+})
+
+// ── Status Add Yours Diwali — Diwali themed add yours ────────────────────────
+await sock.sendMessage('status@broadcast', {
+    statusAddYoursDiwali: {
+        items: [
+            { image: { url: 'https://example.com/diwali.jpg' } },
+            { text: 'Happy Diwali!' }
+        ]
+    }
+})
+
+// ── View All Replies — thread expansion ───────────────────────────────────────
+await sock.sendMessage(jid, {
+    viewAllReplies: {
+        items: [
+            { text: 'Original message' },
+            { text: 'Reply 1' },
+            { text: 'Reply 2' }
+        ]
+    }
+})
+
+// ── Bot Plugin — bot plugin association ───────────────────────────────────────
+await sock.sendMessage(jid, {
+    botPlugin: {
+        items: [
+            { text: 'Plugin parent' },
+            { text: 'Plugin child content' }
+        ]
+    }
+})
+```
+
+| Key | AssociationType | Description |
+|-----|----------------|-------------|
+| `motionPhoto` | 12 | Still image + short video clip |
+| `hdVideoDualUpload` | 5 | SD video + HD version |
+| `hdImageDualUpload` | 10 | Compressed image + HD version |
+| `hevcVideoDualUpload` | 19 | Original video + HEVC encoded |
+| `av1VideoDualUpload` | 21 | Original video + AV1 encoded |
+| `streamedHdVideoDualUpload` | 22 | SD stream + HD stream |
+| `originalVideoDualUpload` | 23 | Processed video + original |
+| `originalImageDualUpload` | 24 | Processed image + original |
+| `mediaAlbum` | 1 | Group of images and videos |
+| `poll` (with images) | 7 | Poll where each option has an image |
+| `eventCoverImage` | 3 | Event message + cover photo |
+| `stickerAnnotation` | 11 | Image with sticker overlaid |
+| `pollAddOptionMessage` | 20 | New option added to an existing poll |
+| `statusPoll` | 4 | Poll attached to a status |
+| `statusAddYours` | 8 | Add yours sticker response |
+| `statusQuestion` | 16 | Question sticker on a status |
+| `statusReaction` | 18 | Reaction to a status |
+| `statusExternalReshare` | 6 | Reshared external content |
+| `statusLinkAction` | 13 | Link action card on a status |
+| `statusNotification` | 9 | Notification linked to a status |
+| `statusAddYoursAiImagine` | 15 | AI-generated imagine response |
+| `statusAddYoursDiwali` | 17 | Diwali themed add yours |
+| `viewAllReplies` | 14 | Thread expansion |
+| `botPlugin` | 2 | Bot plugin association |
 
 ### AI Rich Messages
 
@@ -2705,6 +3032,8 @@ r.addTask({ taskId, title, subtitle, status })  // status: PENDING | RUNNING | D
 r.addLatex({ expression, imageUrl, width, height, fontHeight, padding })
 r.addGenerating('GENERATING')    // image generation placeholder
 r.addInlineImage('url', 'center') // alignment: center | left | right
+r.addHtml('<h2>Hello</h2><p>Raw HTML block</p>') // trustedSources: optional string[]
+r.addRichHtml('<p>Preview</p>', 'Preview')        // or pass tab objects — see below
 r.addSuggest(['Pill 1', 'Pill 2'], false) // false = action row, true = hscroll
 r.addSection(rawSectionObject)   // raw section for advanced use
 r.addEmbeddedScreen(screenObject) // embedded tabbed panel
@@ -2733,6 +3062,80 @@ r.addCode('js', 'console.log("real code")', { replace: 'code' })
 await r.send(jid)
 ```
 
+#### HTML Primitives
+
+##### `addHtml(html, trustedSources?, opts?)`
+
+Renders a raw HTML block inside the AIRich message.
+
+> ⚠️ Uses an experimental primitive internally — treat as unstable.
+
+```javascript
+await sock.airich()
+  .addText('Here is a live preview:')
+  .addHtml('<h2>Hello</h2><p>This is <b>bold</b> and <em>italic</em>.</p>')
+  .send(jid)
+```
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `html` | `string` | — | Raw HTML string to render |
+| `trustedSources` | `string[]` | `[]` | Allowed source origins for the HTML content |
+| `opts` | `object` | `{}` | `{ id, replace, insertAt }` |
+
+---
+
+##### `addRichHtml(tabs, title?, opts?)`
+
+Renders a tabbed HTML panel. Accepts a plain HTML string, a single tab object, or an array of tab objects.
+
+```javascript
+// Single string
+await sock.airich()
+  .addRichHtml('<p>Simple preview</p>')
+  .send(jid)
+
+// Single tab object
+await sock.airich()
+  .addRichHtml({ title: 'Result', html: '<h1>Done</h1>' }, 'Preview')
+  .send(jid)
+
+// Multi-tab panel
+await sock.airich()
+  .addRichHtml([
+    { id: 'tab_preview', title: 'Preview', html: '<h1>Hello World</h1>' },
+    { id: 'tab_code',    title: 'Source',  html: '<pre>&lt;h1&gt;Hello World&lt;/h1&gt;</pre>' },
+    { id: 'tab_live',    title: 'Live',    html: '<p>Live</p>', url: 'https://example.com', trustedSources: ['https://example.com'] },
+  ], 'My Panel')
+  .send(jid)
+```
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `tabs` | `string \| object \| object[]` | — | HTML string, single tab object, or array of tab objects |
+| `title` | `string` | `'Preview'` | Panel title shown above the tabs |
+| `opts` | `object` | `{}` | `{ id, replace, insertAt }` |
+
+**Tab object shape:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | `string` | No | Tab ID — auto-generated as `tab_0`, `tab_1`, … if omitted |
+| `title` | `string` | No | Tab label — defaults to `HTML` (single) or `HTML N` (multi) |
+| `html` | `string` | Yes | HTML content for this tab |
+| `url` | `string` | No | Source URL associated with the HTML |
+| `trustedSources` | `string[]` | No | Allowed origins for this tab's content |
+
+```javascript
+// Updating HTML content by node id
+const r = sock.airich()
+r.addRichHtml('<p>Loading...</p>', 'Preview', { id: 'preview' })
+await r.send(jid)
+
+r.addRichHtml('<p>Content loaded!</p>', 'Preview', { replace: 'preview' })
+await r.send(jid)
+```
+
 ---
 
 ### Button Builder
@@ -2740,26 +3143,47 @@ await r.send(jid)
 ```javascript
 const b = sock.button()
 
-// Header / body / footer
-b.setTitle('Menu')
-b.setSubtitle('Choose an option')
-b.setBody('What would you like to do?')
-b.setFooter('© zervonex')
+// ─── Text content ─────────────────────────────────────────────────────────────
+b.setTitle('Menu')                          // title above the message
+b.setSubtitle('Choose an option')           // subtitle below title
+b.setBody('What would you like to do?')     // main message body
+b.setFooter('© Zervonex')                  // footer text
 
-// Media header (pick one)
+// ─── Header (pick one) ────────────────────────────────────────────────────────
 b.setImage('https://example.com/image.jpg')
+b.setImage('https://example.com/image.jpg', { caption: 'optional' })
+
 b.setVideo('https://example.com/video.mp4')
 b.setDocument('https://example.com/file.pdf', 'file.pdf')
-b.setLocation(6.5244, 3.3792, 'Lagos')
+b.setText('Header text')
 
-// Native-flow buttons (chainable)
+// setLocation — interactive header (use with .reply(), .url(), .call() etc)
+// buttons render stacked vertically
+b.setLocation(6.5244, 3.3792)
+b.setLocation(6.5244, 3.3792, 'Lagos')
+b.setLocation(6.5244, 3.3792, 'Lagos', { address: 'Lagos Island', thumbnail: buffer })
+b.setLocation('Lagos', { address: 'Lagos Island', thumbnail: 'https://...' })
+b.setLocation({ lat: 6.5244, lon: 3.3792, name: 'Lagos', address: 'Lagos Island', thumbnail: buffer })
+
+// setLocationHeader — legacy header (use with .legacyButton() only)
+// buttons render side by side horizontally
+// thumbnail: URL string, Buffer, or file path — if omitted WA renders a live map
+b.setLocationHeader(6.5244, 3.3792)
+b.setLocationHeader(6.5244, 3.3792, 'Lagos')
+b.setLocationHeader(6.5244, 3.3792, 'Lagos', { address: 'Lagos Island', thumbnail: buffer })
+b.setLocationHeader('Lagos', { address: 'Lagos Island', thumbnail: 'https://...' })
+b.setLocationHeader({ title: 'Lagos HQ', address: 'Lagos Island', thumbnail: buffer })
+
+// ─── Native-flow buttons (use with setImage / setVideo / setLocation etc) ─────
 b.reply('Quick Reply', 'reply_id')
 b.url('Visit Website', 'https://zervonex.com')
+b.url('Visit Website', 'https://zervonex.com', 'https://merchant.com')  // with merchant URL
 b.call('Call Us', '+2341234567890')
 b.copy('Copy Code', 'NEXUS2025')
 b.openWebview('Open App', 'https://app.zervonex.com')
 b.catalog('View Catalog')
 b.flow('Start Flow', 'flow_id_here')
+b.flow('Start Flow', 'flow_id_here', { token: 'custom_token' })
 b.remind('Set Reminder')
 b.cancelReminder('Cancel Reminder')
 b.address('Share Address')
@@ -2769,32 +3193,57 @@ b.reviewOrder('Review Order')
 b.orderDetails('Order Details')
 b.paymentStatus('Payment Status')
 b.transactionDetails('Transaction Details')
-b.select('Choose Option', [{ title: 'Section', rows: [{ title: 'Option 1', id: 'opt1' }] }])
+b.select('Choose Option', [
+    { title: 'Section Title', rows: [{ title: 'Option 1', description: 'optional', id: 'opt1' }] }
+])
 
-// Bloks widget (advanced UI with checkboxes, inputs etc)
-b.setBloksWidget([{ __type__: 'Column', id: 'root', children: [{ __type__: 'Text', text: 'Hello' }] }])
-
-// Message-level params
-b.setLimitedTimeOffer(Date.now() + 3600000)
-b.setBottomSheet({ title: 'Select' })
-b.setTapTargetConfiguration({ dismissible: true })
-
-// Legacy buttons (mode: 'legacy')
+// ─── Legacy buttons (use with setLocationHeader) ───────────────────────────────
+// renders buttons side by side — max 3 buttons
 b.legacyButton('Button 1', 'btn1_id')
 b.legacyButton('Button 2', 'btn2_id')
+b.legacyButton('Button 3', 'btn3_id')
 
-// Template buttons (mode: 'template')
+// ─── Template buttons ─────────────────────────────────────────────────────────
 b.templateReply('Quick Reply', 'reply_id')
 b.templateUrl('Visit', 'https://zervonex.com')
 b.templateCall('Call', '+2341234567890')
 
-// Convert to a carousel card
+// ─── Bloks widget (advanced custom UI) ────────────────────────────────────────
+// components is a tree of WA bloks objects — schema is WA-defined
+b.setBloksWidget(components)
+
+// ─── buttonsMessage (all-in-one legacy builder) ───────────────────────────────
+b.buttonsMessage({
+    location: { latitude: 6.5244, longitude: 3.3792, title: 'Lagos HQ', address: 'Lagos Island', thumbnail: buffer },
+    // or:
+    image: 'https://example.com/image.jpg',
+    // or:
+    video: 'https://example.com/video.mp4',
+    // or:
+    document: { url: 'https://example.com/file.pdf', fileName: 'file.pdf' },
+    // or:
+    text: 'Header text',
+    body: 'Pick an action',
+    footer: '© Zervonex',
+    buttons: [
+        { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: 'Option 1', id: 'opt1' }) }
+    ]
+})
+
+// ─── Message-level params ─────────────────────────────────────────────────────
+b.setParams({ key: 'value' })
+b.setLimitedTimeOffer(Date.now() + 3600000)     // expiry timestamp in ms
+b.setBottomSheet({ title: 'Select' })
+b.setTapTargetConfiguration({ dismissible: true })
+
+// ─── Carousel card ────────────────────────────────────────────────────────────
+// converts the current builder state to a card object for use in carousels
 const card = b.toCard()
 
+// ─── Send ─────────────────────────────────────────────────────────────────────
 await b.send(jid)
+await b.send(jid, { messageId: 'custom_id' })
 ```
-
----
 
 ### Carousel Builder
 
