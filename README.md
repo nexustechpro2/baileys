@@ -12,8 +12,7 @@
 <img src="https://user-images.githubusercontent.com/74038190/212284100-561aa473-3905-4a80-b561-0d28506553ee.gif" width="100%">
 </p>
 
-
-**Advanced WhatsApp Web API — Built on WhiskeySockets/Baileys**
+<strong>Advanced WhatsApp Web API — Built on WhiskeySockets/Baileys</strong>
 
 <p>
   <!-- NPM Version -->
@@ -26,8 +25,8 @@
   </a>
   <!-- Security Disclosure Badge -->
   <a href="./SECURITY.md">
-  <img src="https://img.shields.io/badge/Security-Disclosure-blue?style=flat-square" alt="Security Disclosure" />
-</a>
+    <img src="https://img.shields.io/badge/Security-Disclosure-blue?style=flat-square" alt="Security Disclosure" />
+  </a>
   <!-- License -->
   <a href="https://github.com/nexustechpro2/baileys/blob/main/LICENSE">
     <img src="https://img.shields.io/npm/l/@zervonex/baileys?color=yellow&style=flat-square" alt="License" />
@@ -47,9 +46,10 @@
     <img src="https://img.shields.io/badge/Join-WhatsApp%20Channel-25D366?logo=whatsapp&logoColor=white" alt="WhatsApp Channel" />
   </a>
 </p>
-*Modern, feature-rich, and developer-friendly WhatsApp automation library*
 
-*Formerly known as @nexustechpro/baileys*
+<strong>Modern, feature-rich, and developer-friendly WhatsApp automation library</strong>
+
+<em><strong>Formerly known as @nexustechpro/baileys</strong></em>
 
 > ⚠️ This is an independent fork of [@whiskeysockets/baileys](https://github.com/WhiskeySockets/Baileys).
 > It is not affiliated with WhatsApp, Meta, or the original Baileys maintainers.
