@@ -332,8 +332,6 @@ sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
 sock.ev.on('creds.update', saveCreds)
 ```
 
-Install the QR renderer: `npm install qrcode-terminal`
-
 </details>
 
 ---
