@@ -279,9 +279,8 @@ const sock = makeWASocket({
 
 sock.ev.on('creds.update', saveCreds)
 
-// Just call it — no need to wait or poll for WS state
 if (!sock.authState.creds.registered) {
-  const code = await sock.requestPairingCode('1234567890') // digits only, no + or spaces
+  const code = await sock.requestPairingCode('ZERVONEX') // 8 characters (letters and digits),
   console.log('Pairing code:', code)
 }
 ```
@@ -292,6 +291,7 @@ if (!sock.authState.creds.registered) {
 const code = await sock.requestPairingCode('1234567890', 'NEXUS001')
 console.log('Custom code:', code)
 ```
+> **Default pairing code:** If no custom code is passed, the library uses `ZERVONEX` as the default pairing code.
 
 </details>
 
