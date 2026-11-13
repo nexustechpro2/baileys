@@ -208,11 +208,36 @@ const connectToWhatsApp = async () => {
   // Save credentials whenever they update
   sock.ev.on('creds.update', saveCreds)
 
-  // Reply to incoming messages
-  sock.ev.on('messages.upsert', async ({ messages }) => {
+  // Listen for incoming messages
+  sock.ev.on('messages.upsert', async ({ messages, type }) => {
+    // 'notify' = new incoming message, 'append' = history sync (skip those)
+    if (type !== 'notify') return
+
     for (const msg of messages) {
-      if (!msg.key.fromMe && msg.message) {
-        await sock.sendMessage(msg.key.remoteJid, { text: 'Hello!' })
+      // Skip messages sent by yourself
+      if (msg.key.fromMe) continue
+
+      const jid = msg.key.remoteJid           // sender's JID (chat ID)
+      const isGroup = jid.endsWith('@g.us')   // true if it's a group chat
+
+      // Extract the message text (handles plain text, extended text, and image captions)
+      const text =
+        msg.message?.conversation ||
+        msg.message?.extendedTextMessage?.text ||
+        msg.message?.imageMessage?.caption ||
+        ''
+
+      const senderName = msg.pushName ?? 'Unknown'
+
+      // Log the incoming message to your terminal
+      console.log(`📩 New message from ${senderName} [${isGroup ? 'Group' : 'DM'}] (${jid}): ${text}`)
+
+      // 1. Send a plain text reply
+      await sock.sendMessage(jid, { text: `You said: "${text}"` })
+
+      // 2. Send a reply only if the message matches a keyword
+      if (text.toLowerCase() === '!ping') {
+        await sock.sendMessage(jid, { text: '🏓 Pong!' })
       }
     }
   })
@@ -221,9 +246,9 @@ const connectToWhatsApp = async () => {
 connectToWhatsApp()
 ```
 
-</details>
+> 💡 See [💬 Sending Messages](#-sending-messages) for all JID formats and message types.
 
----
+</details>
 
 ## 🔐 Authentication
 
