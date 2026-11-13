@@ -191,6 +191,7 @@ const connectToWhatsApp = async () => {
     },
     browser: Browsers.ubuntu('Chrome'),
     generateHighQualityLinkPreview: true,
+    printQRInTerminal: true,
     logger
   })
 
