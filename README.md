@@ -280,7 +280,7 @@ const sock = makeWASocket({
 sock.ev.on('creds.update', saveCreds)
 
 if (!sock.authState.creds.registered) {
-  const code = await sock.requestPairingCode('ZERVONEX') // 8 characters (letters and digits),
+  const code = await sock.requestPairingCode('1234567890') // phone number digits only in country code format, no + or spaces
   console.log('Pairing code:', code)
 }
 ```
@@ -288,7 +288,7 @@ if (!sock.authState.creds.registered) {
 **Custom pairing code (must be exactly 8 characters):**
 
 ```javascript
-const code = await sock.requestPairingCode('1234567890', 'NEXUS001')
+const code = await sock.requestPairingCode('1234567890', 'ZERVONEX')
 console.log('Custom code:', code)
 ```
 > **Default pairing code:** If no custom code is passed, the library uses `ZERVONEX` as the default pairing code.
