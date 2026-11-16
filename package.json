@@ -82,9 +82,9 @@
   },
   "files": [
     "lib/**/*.js",
-    "lib/**/*.json",
     "WAProto/**/*.js",
     "WAProto/**/*.json",
+    "WAProto/**/*.proto",
     "engine-requirements.js"
   ],
   "dependencies": {
