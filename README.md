@@ -3852,6 +3852,10 @@ import {
   downloadContentFromMessage,
   prepareWAMessageMedia,
 
+  // Media URL utilities
+  isHttpUrl,          // isHttpUrl(input) → boolean — true if input is a valid HTTP/HTTPS URL
+  resolveToMediaUrl,  // resolveToMediaUrl(input) → Promise<string> — resolves buffer/path/url to a hosted URL
+
   // Message utils
   getContentType,
   normalizeMessageContent,
